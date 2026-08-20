@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5cbbff31df278b4c8e27634eae36e07, type: 3}
+  m_Name: AttackData_AllowInput
+  m_EditorClassIdentifier: Assembly-CSharp::AllowInputAttackData
+  damage: 10
+  attackRange: 1.5
+  attackRadius: 2
+  knockbackForce: 12
+  launchForce: 12
+  groundSlideDeceleration: 30
+  attackCooldown: 0.1
+  attackClip: {fileID: 7400000, guid: 1decdefefb5ed8b4da995e9e7ee5828f, type: 2}
+  nextAttack: {fileID: 0}
