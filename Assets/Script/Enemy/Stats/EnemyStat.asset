@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23a9454ca810c5140bf44ef6ce58ed30, type: 3}
   m_Name: EnemyStat
   m_EditorClassIdentifier: Assembly-CSharp::CharacterStatData
-  maxHealth: 1000
+  maxHealth: 100

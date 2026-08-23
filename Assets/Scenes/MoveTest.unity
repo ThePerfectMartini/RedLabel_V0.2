@@ -569,6 +569,7 @@ GameObject:
   - component: {fileID: 362135772}
   - component: {fileID: 362135771}
   - component: {fileID: 362135773}
+  - component: {fileID: 362135774}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -674,6 +675,19 @@ MonoBehaviour:
   idleColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   attackingColor: {r: 1, g: 1, b: 1, a: 1}
   hitFrameColor: {r: 1, g: 0, b: 0, a: 1}
+--- !u!114 &362135774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 362135759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25ccd595c0eb3254681c090668725dae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthDebugDisplay
+  offset: {x: 0, y: 2, z: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1142,6 +1156,7 @@ GameObject:
   - component: {fileID: 1532098316}
   - component: {fileID: 1532098321}
   - component: {fileID: 1532098322}
+  - component: {fileID: 1532098323}
   m_Layer: 7
   m_Name: Enemy
   m_TagString: Enemy
@@ -1264,6 +1279,19 @@ MonoBehaviour:
   arrivalTolerance: 0.3
   postAttackPause: 1
   positionUpdateInterval: 0.2
+--- !u!114 &1532098323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1532098314}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25ccd595c0eb3254681c090668725dae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthDebugDisplay
+  offset: {x: 0, y: 2, z: 0}
 --- !u!1 &1850219730
 GameObject:
   m_ObjectHideFlags: 0
