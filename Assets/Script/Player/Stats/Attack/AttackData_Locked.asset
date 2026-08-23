@@ -15,7 +15,7 @@ MonoBehaviour:
   damage: 10
   attackRange: 1.5
   attackRadius: 1
-  knockbackForce: 6
+  knockbackForce: 12
   launchForce: 0
   groundSlideDeceleration: 30
   attackCooldown: 0

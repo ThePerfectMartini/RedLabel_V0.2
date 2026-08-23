@@ -13,7 +13,7 @@ using UnityEngine.Serialization;
 /// - enemyLayer는 적이 속한 Layer로 지정
 /// - 별도의 Input Actions 에셋이나 PlayerInput 컴포넌트는 필요 없음 (키 바인딩이 코드에 직접 있음)
 /// </summary>
-public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IAttackEventListener, IAttackClipSource, IJumpEventListener
+public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IAttackEventListener, IAttackClipSource, IJumpEventListener, IKnockdownEventListener, IAttackRangeDebugInfo
 {
     [Header("공격 대상 레이어")]
     [KoreanLabel("적 레이어")]
@@ -100,12 +100,13 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
     // 발사(OnJumpLaunchFrame)를 거친 경우에만 착지 경직으로 이어지도록 이 플래그로 구분한다.
     bool isJumpAirborne;
 
-    // ===== TEMP: 넉백 색상 테스트 (제거 시 이 블록 전부 + Update 안의 호출부 삭제) =====
-    [KoreanLabel("넉백 중 색상 (테스트)")]
-    public Color tempKnockbackColor = Color.red;
-    Renderer tempRenderer;
-    Color tempOriginalColor;
-    // ===== TEMP 끝 =====
+    // 넉백으로 공중에 떴다가 착지해 쓰러져 있는(Landed) 중인지. 이 동안엔 이동/공격/점프 입력이 막힌다.
+    // Landed 클립의 Animation Event(OnKnockdownGetUpStartFrame)가 호출되면 isGettingUp으로 넘어간다.
+    bool isKnockdownLanded;
+
+    // 쓰러진 상태에서 몸을 일으키는(GetUp) 중인지. 이 동안에도 이동/공격/점프 입력이 막힌다.
+    // GetUp 클립의 Animation Event(OnKnockdownGetUpEndFrame)가 호출되면 꺼지고 다시 조작 가능해진다.
+    bool isGettingUp;
 
     void Awake()
     {
@@ -114,12 +115,6 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         if (spriteRenderer == null)
             Debug.LogWarning($"{name}: SpriteRenderer가 없어 좌우 반전이 적용되지 않습니다. (아직 프리미티브를 쓰는 중이면 정상)");
-
-        // ===== TEMP: 넉백 색상 테스트 =====
-        tempRenderer = GetComponentInChildren<Renderer>();
-        if (tempRenderer != null)
-            tempOriginalColor = tempRenderer.material.color;
-        // ===== TEMP 끝 =====
 
         if (characterStatData == null)
             Debug.LogWarning($"{name}: characterStatData가 연결되지 않아 MovementCore/CombatCore 기본값을 사용합니다.");
@@ -207,9 +202,14 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
 
     void OnAttackPerformed(InputAction.CallbackContext ctx)
     {
-        // 점프 준비 동작/착지 경직 중엔 공격 입력을 무시한다. 여기서 공격이 시작되면 해당 클립이
-        // 공격 클립으로 교체되어 OnJumpLaunchFrame / OnJumpLandEndFrame이 영영 호출되지 않는다.
-        if (isJumpWindingUp || isLandRecovering) return;
+        // 점프 준비 동작/착지 경직/기상 중엔 공격 입력을 무시한다. 여기서 공격이 시작되면 해당 클립이
+        // 공격 클립으로 교체되어 OnJumpLaunchFrame / OnJumpLandEndFrame / 기상 이벤트가 영영 호출되지 않는다.
+        if (isJumpWindingUp || isLandRecovering || isKnockdownLanded || isGettingUp) return;
+
+        // 넉백으로 뜬 상태(Airborne)나 얻어맞아 미끄러지는 중(Stun)에는 공격 입력을 무시한다.
+        // 자신의 Impulse 공격으로 인한 슬라이드(selfImpulseActive)는 Stun이 아니라 그 공격 자체의
+        // 진행이므로 막지 않는다.
+        if (movement.IsKnockedBackAirborne || (movement.IsGroundSliding && !selfImpulseActive)) return;
 
         bool isAttacking = attackStateTimer > 0f;
 
@@ -280,7 +280,7 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
     /// </summary>
     void OnJumpPerformed(InputAction.CallbackContext ctx)
     {
-        if (!movement.IsGrounded || isJumpWindingUp || isLandRecovering) return;
+        if (!movement.IsGrounded || isJumpWindingUp || isLandRecovering || isKnockdownLanded || isGettingUp) return;
         if (attackStateTimer > 0f) return; // 공격 중엔 점프 불가 (공격 클립이 재생 중인 JumpStart 클립을 덮어쓰는 것 방지)
 
         isJumpWindingUp = true;
@@ -311,6 +311,25 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
         isLandRecovering = false;
     }
 
+    /// <summary>
+    /// Landed 클립의 "몸을 일으키기 시작하는" 프레임의 Animation Event(KnockdownAnimationEventReceiver 경유)가 호출한다.
+    /// 이 시점에 쓰러진 상태(Landed)가 끝나고 일어나는 상태(GetUp)로 넘어간다.
+    /// </summary>
+    public void OnKnockdownGetUpStartFrame()
+    {
+        isKnockdownLanded = false;
+        isGettingUp = true;
+    }
+
+    /// <summary>
+    /// GetUp 클립의 "완전히 일어나는" 프레임의 Animation Event(KnockdownAnimationEventReceiver 경유)가 호출한다.
+    /// 이 시점에 기상이 끝나고 다시 이동/공격/점프가 가능해진다.
+    /// </summary>
+    public void OnKnockdownGetUpEndFrame()
+    {
+        isGettingUp = false;
+    }
+
     void Update()
     {
         // 현재 공격이 이동을 막는 공격(Locked/Impulse)이면 이동 입력을 0으로 무시한다.
@@ -318,8 +337,12 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
             && combat.CurrentAttack != null
             && !combat.CurrentAttack.AllowsPlayerMovement;
 
-        // 점프 준비 동작과 착지 경직 중에도 이동 입력을 막는다.
-        bool movementLocked = movementLockedByAttack || isJumpWindingUp || isLandRecovering;
+        // 점프 준비 동작과 착지 경직, 넉백 기상 중에도 이동 입력을 막는다.
+        // Stun(얻어맞아 미끄러지는 중)과 Airborne(넉백으로 뜬 중)도 마찬가지로 막는다. 실제 이동 자체는
+        // MovementCore.SetMoveInput이 내부적으로 이미 무시하지만, 여기서 막지 않으면 좌우 키 입력만으로
+        // isFacingRight(바라보는 방향)가 계속 바뀌어버린다.
+        bool movementLocked = movementLockedByAttack || isJumpWindingUp || isLandRecovering || isKnockdownLanded || isGettingUp
+            || movement.IsKnockedBackAirborne || (movement.IsGroundSliding && !selfImpulseActive);
         Vector2 effectiveMoveInput = movementLocked ? Vector2.zero : moveInput;
 
         movement.SetMoveInput(effectiveMoveInput);
@@ -338,12 +361,22 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
         // JumpLand 상태에 갇혀버린다 (실제로 겪은 버그).
         bool wasJumpAirborne = isJumpAirborne;
 
+        // 넉백으로 공중에 뜬 상태(Airborne)가 이번 Tick에 끝나는지(착지하는지) 판단하려면
+        // Tick 이전 값을 기억해둬야 한다. Tick 안에서 바운스가 남아있는 동안은 계속 true이므로
+        // 여러 번 튕기다 최종 착지하는 그 프레임에만 한 번 Landed로 전환된다.
+        bool wasKnockedBackAirborne = movement.IsKnockedBackAirborne;
+
         movement.Tick(Time.deltaTime, bounds);
 
         if (wasJumpAirborne && movement.IsGrounded)
         {
             isJumpAirborne = false;
             isLandRecovering = true;
+        }
+
+        if (wasKnockedBackAirborne && !movement.IsKnockedBackAirborne)
+        {
+            isKnockdownLanded = true;
         }
 
         transform.position = movement.Position;
@@ -360,21 +393,12 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
         }
 
         UpdateCharacterState();
-
-        // ===== TEMP: 넉백 색상 테스트 =====
-        // movement.IsInKnockback 대신 상태 머신(stateMachine.CurrentState)을 보는 이유는 아래 설명 참고.
-        if (tempRenderer != null)
-        {
-            bool isKnockbackVisual = stateMachine.CurrentState == CharacterState.Stun
-                || stateMachine.CurrentState == CharacterState.Airborne;
-            tempRenderer.material.color = isKnockbackVisual ? tempKnockbackColor : tempOriginalColor;
-        }
-        // ===== TEMP 끝 =====
     }
 
     /// <summary>
     /// 매 프레임 현재 상황을 보고 캐릭터 상태를 판단해 반영한다.
-    /// 우선순위: Airborne(공중 넉백) > Stun(그라운드 슬라이드) > Attack > InAir(공중) > JumpStart(준비) > JumpLand(착지) > Move/Idle.
+    /// 우선순위: Airborne(공중 넉백) > Landed(쓰러짐) > GetUp(기상) > Stun(그라운드 슬라이드) > Attack
+    /// > InAir(공중) > JumpStart(준비) > JumpLand(착지) > Move/Idle.
     /// JumpStart/JumpLand가 InAir보다 뒤에 오는 이유: 둘 다 지상에서만 켜지므로(IsGrounded == true) InAir와 겹치지 않는다.
     /// 단, 그라운드 슬라이드가 내 Impulse 공격 자신의 돌진으로 인한 것이면(selfImpulseActive) Stun 대신 Attack으로 본다.
     /// </summary>
@@ -383,6 +407,14 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
         if (movement.IsKnockedBackAirborne)
         {
             stateMachine.SetState(CharacterState.Airborne);
+        }
+        else if (isKnockdownLanded)
+        {
+            stateMachine.SetState(CharacterState.Landed);
+        }
+        else if (isGettingUp)
+        {
+            stateMachine.SetState(CharacterState.GetUp);
         }
         else if (movement.IsGroundSliding && !selfImpulseActive)
         {
@@ -418,15 +450,27 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
     {
         currentHealth -= hit.Damage;
 
-        // 점프 준비/착지 경직 중 맞으면 그 동작은 무산된다. 여기서 끄지 않으면 피격으로 해당 클립이
-        // 중단되어 Animation Event가 호출되지 못하고, 플래그가 켜진 채 남아 이동이 영구히 잠긴다.
+        // 점프 준비/착지 경직/쓰러짐/기상 중 맞으면 그 동작은 무산된다. 여기서 끄지 않으면 피격으로 해당
+        // 클립이 중단되어 Animation Event가 호출되지 못하고, 플래그가 켜진 채 남아 이동이 영구히 잠긴다.
         // isJumpAirborne도 함께 꺼야, 점프 중 피격 -> 넉백 착지가 (점프 발사도 안 했으면서) 다음
         // 착지 때 엉뚱하게 착지 경직으로 이어지는 걸 막을 수 있다.
         isJumpWindingUp = false;
         isLandRecovering = false;
         isJumpAirborne = false;
+        isKnockdownLanded = false;
+        isGettingUp = false;
 
         movement.ApplyKnockback(hit.KnockbackVelocity, hit.GroundSlideDeceleration);
+
+        // 공격 중에 맞아 Stun/Airborne으로 전환되면 진행 중이던 공격을 즉시 취소한다. 그대로 두면
+        // attackStateTimer가 배경에서 계속 흐르다 만료되는 순간 AdvanceComboOrEnd가 새 공격 애니메이션을
+        // 틀어버려서, Stun/Airborne 연출 위에 공격 클립이 갑자기 덮어씌워지는 문제가 생긴다.
+        if (movement.IsKnockedBackAirborne || movement.IsGroundSliding)
+        {
+            attackStateTimer = 0f;
+            comboInputBuffered = false;
+            selfImpulseActive = false;
+        }
 
         if (currentHealth <= 0)
         {

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MovementStatData
   moveSpeed: 5
   gravityScale: 1
-  jumpForce: 20
+  jumpForce: 10
   bounceRestitution: 0.5
   bounceVelocityThreshold: 5
   airborneLaunchThreshold: 0.5
