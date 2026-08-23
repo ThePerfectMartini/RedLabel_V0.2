@@ -87,7 +87,14 @@ public class MovementCore
     }
 
     /// <summary>
-    /// 입력 벡터(-1~1)를 받아 8방향으로 스냅한 뒤 수평 속도를 갱신한다.
+    /// 8방향 스냅 적용 여부. 키보드 입력을 받는 플레이어는 8방향으로 스냅해야 자연스럽지만,
+    /// 임의의 각도로 목표 지점을 향해 움직이는 AI(적)는 스냅 없이 입력 방향 그대로 이동해야 한다.
+    /// </summary>
+    public bool Use8DirectionSnap = true;
+
+    /// <summary>
+    /// 입력 벡터를 받아 수평 속도를 갱신한다. Use8DirectionSnap이 true면 8방향으로 스냅하고,
+    /// false면 입력 방향을 그대로 정규화해서 사용한다.
     /// 공중에서는 호출해도 무시된다 (공중 이동 제어 없음 확정 사항 반영).
     /// </summary>
     public void SetMoveInput(Vector2 rawInput)
@@ -102,7 +109,8 @@ public class MovementCore
             return;
         }
 
-        Vector3 dir = SnapTo8Directions(new Vector3(rawInput.x, 0f, rawInput.y));
+        Vector3 rawDir = new Vector3(rawInput.x, 0f, rawInput.y);
+        Vector3 dir = Use8DirectionSnap ? SnapTo8Directions(rawDir) : rawDir.normalized;
         Velocity.x = dir.x * MoveSpeed;
         Velocity.z = dir.z * MoveSpeed;
     }

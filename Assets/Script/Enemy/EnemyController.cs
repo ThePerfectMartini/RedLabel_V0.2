@@ -136,6 +136,7 @@ public class EnemyController : MonoBehaviour, IHittable, IStateMachineOwner, IAt
         currentHealth = characterStatData != null ? characterStatData.maxHealth : 100;
 
         movement.Init(movementStatData);
+        movement.Use8DirectionSnap = false; // AI는 플레이어와 달리 임의의 각도로 목표를 향해 곧장 이동한다.
         combat.Init(firstAttackData);
 
         // 오브젝트에 이미 붙어있는 콜라이더를 그대로 인식 (타입 무관, 강제로 추가하지 않음)
@@ -165,21 +166,14 @@ public class EnemyController : MonoBehaviour, IHittable, IStateMachineOwner, IAt
         if (intent.WantsJump)
             TryStartJump(intent.MoveInput);
 
-        // 현재 공격이 이동을 막는 공격(Locked/Impulse)이거나, 점프 준비/착지 경직 중이면 이동 의도를 무시한다.
-        bool movementLockedByAttack = attackStateTimer > 0f
-            && combat.CurrentAttack != null
-            && !combat.CurrentAttack.AllowsPlayerMovement;
-        // Stun(얻어맞아 미끄러지는 중)과 Airborne(넉백으로 뜬 중)도 마찬가지로 막는다. 실제 이동 자체는
-        // MovementCore.SetMoveInput이 내부적으로 이미 무시하지만, 여기서 막지 않으면 Brain의 이동 의도만으로
-        // isFacingRight(바라보는 방향)가 계속 바뀌어버린다.
-        bool movementLocked = movementLockedByAttack || isJumpWindingUp || isLandRecovering || isKnockdownLanded || isGettingUp
-            || movement.IsKnockedBackAirborne || (movement.IsGroundSliding && !selfImpulseActive);
-        Vector2 effectiveMoveInput = movementLocked ? Vector2.zero : intent.MoveInput;
+        // 이동이 막힌 상태(공격/점프 준비/착지 경직/기상/Stun/Airborne)면 이동 의도를 무시한다.
+        Vector2 effectiveMoveInput = IsMovementLocked() ? Vector2.zero : intent.MoveInput;
 
         movement.SetMoveInput(effectiveMoveInput);
 
-        if (movement.IsGrounded && effectiveMoveInput.sqrMagnitude > 0.01f)
-            SetFacing(new Vector3(effectiveMoveInput.x, 0f, effectiveMoveInput.y));
+        // 바라보는 방향은 이동 방향으로 자동 갱신하지 않는다 (예: 추적 중 너무 가까우면 플레이어를
+        // 바라본 채로 뒷걸음질쳐야 하므로 이동 방향과 바라보는 방향이 다를 수 있다). 그 대신 Brain이
+        // Think()에서 SetFacing을 직접 호출해서 원하는 방향을 지정한다.
 
         Bounds bounds = MapBounds.Instance != null
             ? MapBounds.Instance.Bounds
@@ -226,12 +220,30 @@ public class EnemyController : MonoBehaviour, IHittable, IStateMachineOwner, IAt
     }
 
     /// <summary>
-    /// 바라볼 좌/우를 설정한다. 이동 중에는 자동으로 갱신되지만, 제자리에서 대상 쪽을 보게 하는 등
-    /// Brain이 직접 지정해야 할 때 호출한다. X 성분만 보고 판단한다 (위/아래로만 향하는 방향이 오면
-    /// 부호가 없어 기존 좌우를 그대로 유지).
+    /// 이동 의도를 무시해야 하는 상태인지: 이동을 막는 공격(Locked/Impulse) 중, 점프 준비/착지 경직/기상 중,
+    /// 또는 Stun(얻어맞아 미끄러지는 중)/Airborne(넉백으로 뜬 중). 이동뿐 아니라 SetFacing도 이 상태에서는
+    /// 무시한다 — 안 그러면 Stun 중에 Brain의 이동 의도만으로 방향이 계속 바뀌는 등 부자연스러워진다.
+    /// </summary>
+    bool IsMovementLocked()
+    {
+        bool lockedByAttack = attackStateTimer > 0f
+            && combat.CurrentAttack != null
+            && !combat.CurrentAttack.AllowsPlayerMovement;
+
+        return lockedByAttack || isJumpWindingUp || isLandRecovering || isKnockdownLanded || isGettingUp
+            || movement.IsKnockedBackAirborne || (movement.IsGroundSliding && !selfImpulseActive);
+    }
+
+    /// <summary>
+    /// 바라볼 좌/우를 설정한다. 이동 방향과 무관하게 Brain이 매 프레임 직접 호출해서 원하는 방향을
+    /// 지정하는 용도(예: 너무 가까워서 뒷걸음질칠 때도 대상을 계속 바라보게). X 성분만 보고 판단하며
+    /// (위/아래로만 향하는 방향이 오면 부호가 없어 기존 좌우를 그대로 유지), 이동이 막힌 상태(Stun 등)면
+    /// 요청을 무시한다.
     /// </summary>
     public void SetFacing(Vector3 direction)
     {
+        if (IsMovementLocked()) return;
+
         if (Mathf.Abs(direction.x) > 0.01f)
             isFacingRight = direction.x > 0f;
     }

@@ -15,6 +15,22 @@ using UnityEngine.Serialization;
 /// </summary>
 public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IAttackEventListener, IAttackClipSource, IJumpEventListener, IKnockdownEventListener, IAttackRangeDebugInfo
 {
+    static PlayerController instance;
+
+    /// <summary>
+    /// 씬 안의 PlayerController를 찾아 캐싱해서 반환. MapBounds.Instance와 같은 방식 —
+    /// 인스펙터에서 따로 연결할 필요 없이 첫 접근 시점에 지연 탐색한다. 적 AI가 추적 대상을 찾을 때 사용.
+    /// </summary>
+    public static PlayerController Instance
+    {
+        get
+        {
+            if (instance == null)
+                instance = FindFirstObjectByType<PlayerController>();
+            return instance;
+        }
+    }
+
     [Header("공격 대상 레이어")]
     [KoreanLabel("적 레이어")]
     public LayerMask enemyLayer;
@@ -113,6 +129,11 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
 
     void Awake()
     {
+        if (instance != null && instance != this)
+            Debug.LogWarning($"씬에 PlayerController가 여러 개 있습니다. '{instance.name}'을 계속 사용합니다.");
+        else
+            instance = this;
+
         movement.Position = transform.position;
 
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
