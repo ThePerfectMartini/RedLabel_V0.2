@@ -24,9 +24,11 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
     public CharacterStatData characterStatData;
     [KoreanLabel("이동 스탯")]
     public MovementStatData movementStatData;
-    [KoreanLabel("공격 1 (콤보 시작)")]
+    [KoreanLabel("공격 1 (콤보 시작, X키)")]
     [FormerlySerializedAs("combatStatData")]
     public AttackData firstAttackData;
+    [KoreanLabel("공격 2 (콤보 시작, Z키)")]
+    public AttackData secondAttackData;
 
     readonly MovementCore movement = new MovementCore();
     readonly CombatCore combat = new CombatCore();
@@ -59,6 +61,7 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
 
     InputAction moveAction;
     InputAction attackAction;
+    InputAction secondAttackAction;
     InputAction jumpAction;
 
     Vector2 moveInput;
@@ -161,6 +164,8 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
         attackAction = new InputAction("Attack", InputActionType.Button, binding: "<Keyboard>/x");
         attackAction.AddBinding("<Mouse>/leftButton");
 
+        secondAttackAction = new InputAction("AttackZ", InputActionType.Button, binding: "<Keyboard>/z");
+
         jumpAction = new InputAction("Jump", InputActionType.Button, binding: "<Keyboard>/c");
     }
 
@@ -169,10 +174,12 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
         moveAction.performed += OnMoveChanged;
         moveAction.canceled += OnMoveChanged;
         attackAction.performed += OnAttackPerformed;
+        secondAttackAction.performed += OnSecondAttackPerformed;
         jumpAction.performed += OnJumpPerformed;
 
         moveAction.Enable();
         attackAction.Enable();
+        secondAttackAction.Enable();
         jumpAction.Enable();
     }
 
@@ -181,10 +188,12 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
         moveAction.performed -= OnMoveChanged;
         moveAction.canceled -= OnMoveChanged;
         attackAction.performed -= OnAttackPerformed;
+        secondAttackAction.performed -= OnSecondAttackPerformed;
         jumpAction.performed -= OnJumpPerformed;
 
         moveAction.Disable();
         attackAction.Disable();
+        secondAttackAction.Disable();
         jumpAction.Disable();
     }
 
@@ -192,6 +201,7 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
     {
         moveAction?.Dispose();
         attackAction?.Dispose();
+        secondAttackAction?.Dispose();
         jumpAction?.Dispose();
     }
 
@@ -200,7 +210,16 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
         moveInput = ctx.ReadValue<Vector2>();
     }
 
-    void OnAttackPerformed(InputAction.CallbackContext ctx)
+    void OnAttackPerformed(InputAction.CallbackContext ctx) => TryPerformAttack(firstAttackData);
+
+    /// <summary>Z키 공격 입력. X키(OnAttackPerformed)와 동일한 가드/콤보 로직을 타되, 시작 데이터만 secondAttackData로 다르다.</summary>
+    void OnSecondAttackPerformed(InputAction.CallbackContext ctx) => TryPerformAttack(secondAttackData);
+
+    /// <summary>
+    /// 공격 입력 공통 처리. 공격 중이 아니면 startData로 콤보를 새로 시작하고,
+    /// 이미 공격 중이면 현재 진행 중인 콤보(어느 키로 시작했든)의 nextAttack으로 이어갈지만 버퍼링한다.
+    /// </summary>
+    void TryPerformAttack(AttackData startData)
     {
         // 점프 준비 동작/착지 경직/기상 중엔 공격 입력을 무시한다. 여기서 공격이 시작되면 해당 클립이
         // 공격 클립으로 교체되어 OnJumpLaunchFrame / OnJumpLandEndFrame / 기상 이벤트가 영영 호출되지 않는다.
@@ -215,10 +234,10 @@ public class PlayerController : MonoBehaviour, IHittable, IStateMachineOwner, IA
 
         if (!isAttacking)
         {
-            // 콤보 시작(공격 1)만 쿨타임 체크를 한다. 콤보 도중 이어지는 공격은 현재 공격의
+            // 콤보 시작(공격 1/공격 2)만 쿨타임 체크를 한다. 콤보 도중 이어지는 공격은 현재 공격의
             // 지속시간이 곧 다음 입력을 받을 수 있는 시점이므로 별도 쿨타임 체크가 필요 없다.
             if (!combat.TryStartAttack(Time.time)) return;
-            StartAttack(firstAttackData);
+            StartAttack(startData);
         }
         else if (combat.CurrentAttack != null && combat.CurrentAttack.nextAttack != null)
         {

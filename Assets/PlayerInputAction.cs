@@ -198,17 +198,6 @@ public partial class @PlayerInputAction: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""695cafdd-6037-4d6e-a4ce-ca9be28fb57e"",
-                    ""path"": """",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""AttackZ"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""28f40f87-5aee-4c6c-9894-9efe18801fda"",
                     ""path"": ""<Keyboard>/z"",
                     ""interactions"": """",
