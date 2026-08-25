@@ -10,28 +10,44 @@ using UnityEngine;
 /// </summary>
 public abstract class AttackData : ScriptableObject
 {
+    [Header("위력")]
     [KoreanLabel("데미지")]
     public int damage = 10;
 
+    [Header("판정 범위")]
     [KoreanLabel("공격 사거리")]
     public float attackRange = 1.5f;
 
     [KoreanLabel("공격 판정 반경")]
     public float attackRadius = 1f;
 
+    [Header("넉백 - 대상이 지상에 있을 때")]
     [KoreanLabel("밀치는 힘")]
     public float knockbackForce = 12f;  // 상대를 밀어내는 힘 (수평)
 
     [KoreanLabel("띄우는 힘")]
     public float launchForce = 6f;      // 상대를 띄우는 힘 (수직)
 
+    [Header("넉백 - 대상이 공중에 있을 때")]
+    [KoreanLabel("밀치는 힘(공중)")]
+    [Tooltip("이미 공중에 뜬 대상을 맞혔을 때 적용할 수평 힘. 추가타로 더 멀리 날려보내거나(값을 키움) " +
+        "제자리에서 계속 띄우는(값을 줄임) 식으로 지상 넉백과 다르게 조절할 수 있다.")]
+    public float airborneKnockbackForce = 12f;
+
+    [KoreanLabel("띄우는 힘(공중)")]
+    [Tooltip("이미 공중에 뜬 대상을 맞혔을 때 적용할 수직 힘.")]
+    public float airborneLaunchForce = 6f;
+
+    [Header("넉백 - 공통")]
     [KoreanLabel("그라운드 슬라이드 감속")]
     [Tooltip("그라운드 슬라이드 중 수평 속도를 초당 이만큼 줄여서 감속 정지시킨다 (에어본 넉백일 땐 사용 안 함)")]
     public float groundSlideDeceleration = 30f;
 
+    [Header("타이밍")]
     [KoreanLabel("공격 쿨타임")]
     public float attackCooldown = 0.1f;
 
+    [Header("애니메이션 / 콤보")]
     [KoreanLabel("공격 애니메이션 클립")]
     [Tooltip("공격 상태 지속시간을 이 클립의 길이에서 자동으로 계산한다. 별도로 지속시간 숫자를 입력할 필요 없음. Animator State 이름도 이 클립과 같아야 한다.")]
     public AnimationClip attackClip;
@@ -42,6 +58,12 @@ public abstract class AttackData : ScriptableObject
 
     /// <summary>공격 지속시간 동안 플레이어 입력으로 이동 가능한지. false면 PlayerController가 이동 입력을 무시한다.</summary>
     public virtual bool AllowsPlayerMovement => true;
+
+    /// <summary>
+    /// 이 공격을 하는 동안 적용할 이동 속도 배율(기본 이동 속도 기준). 이동이 막히는 공격에서는
+    /// 어차피 이동 자체가 무시되므로 의미가 없고, AllowInputAttackData에서만 실제로 지정한다.
+    /// </summary>
+    public virtual float MoveSpeedMultiplier => 1f;
 
     /// <summary>공격 시작 시 자기 자신에게 걸리는 강제 이동(돌진 등). 기본은 아무 것도 하지 않음.</summary>
     public virtual void ApplySelfMovement(MovementCore movement, Vector3 facingDir) { }

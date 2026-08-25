@@ -93,6 +93,12 @@ public class MovementCore
     public bool Use8DirectionSnap = true;
 
     /// <summary>
+    /// MoveSpeed에 곱해지는 일시적인 이동 속도 배율. 이동을 허용하는 공격(AllowInputAttackData) 중
+    /// 평소보다 느리게/빠르게 움직이게 하는 용도로 컨트롤러가 매 프레임 설정한다. 기본값 1 = 평소 속도.
+    /// </summary>
+    public float MoveSpeedMultiplier = 1f;
+
+    /// <summary>
     /// 입력 벡터를 받아 수평 속도를 갱신한다. Use8DirectionSnap이 true면 8방향으로 스냅하고,
     /// false면 입력 방향을 그대로 정규화해서 사용한다.
     /// 공중에서는 호출해도 무시된다 (공중 이동 제어 없음 확정 사항 반영).
@@ -111,8 +117,9 @@ public class MovementCore
 
         Vector3 rawDir = new Vector3(rawInput.x, 0f, rawInput.y);
         Vector3 dir = Use8DirectionSnap ? SnapTo8Directions(rawDir) : rawDir.normalized;
-        Velocity.x = dir.x * MoveSpeed;
-        Velocity.z = dir.z * MoveSpeed;
+        float speed = MoveSpeed * MoveSpeedMultiplier;
+        Velocity.x = dir.x * speed;
+        Velocity.z = dir.z * speed;
     }
 
     /// <summary>

@@ -169,6 +169,11 @@ public class EnemyController : MonoBehaviour, IHittable, IStateMachineOwner, IAt
         // 이동이 막힌 상태(공격/점프 준비/착지 경직/기상/Stun/Airborne)면 이동 의도를 무시한다.
         Vector2 effectiveMoveInput = IsMovementLocked() ? Vector2.zero : intent.MoveInput;
 
+        // 이동을 허용하는 공격 중이면 그 공격이 지정한 이동 속도 배율을 적용한다 (공격 중이 아니면 1 = 평소 속도).
+        movement.MoveSpeedMultiplier = attackStateTimer > 0f && combat.CurrentAttack != null
+            ? combat.CurrentAttack.MoveSpeedMultiplier
+            : 1f;
+
         movement.SetMoveInput(effectiveMoveInput);
 
         // 바라보는 방향은 이동 방향으로 자동 갱신하지 않는다 (예: 추적 중 너무 가까우면 플레이어를
@@ -437,6 +442,10 @@ public class EnemyController : MonoBehaviour, IHittable, IStateMachineOwner, IAt
     {
         currentHealth -= hit.Damage;
 
+        // 지금 떠 있는지는 나만 아는 정보라, 공격자가 보낸 지상용/공중용 넉백 중 어느 쪽을 쓸지 여기서 고른다.
+        // 넉백으로 뜬 상태(Airborne)뿐 아니라 점프로 떠 있는 중(InAir)에 맞은 것도 공중 피격으로 본다.
+        Vector3 knockback = hit.ResolveKnockbackVelocity(!movement.IsGrounded);
+
         // 점프 준비/착지 경직/쓰러짐/기상 중 맞으면 그 동작은 무산된다. 여기서 끄지 않으면 피격으로 해당
         // 클립이 중단되어 Animation Event가 호출되지 못하고, 플래그가 켜진 채 남아 이동이 영구히 잠긴다.
         // isJumpAirborne도 함께 꺼야, 점프 중 피격 -> 넉백 착지가 다음 착지 때 엉뚱하게
@@ -447,7 +456,7 @@ public class EnemyController : MonoBehaviour, IHittable, IStateMachineOwner, IAt
         isKnockdownLanded = false;
         isGettingUp = false;
 
-        movement.ApplyKnockback(hit.KnockbackVelocity, hit.GroundSlideDeceleration);
+        movement.ApplyKnockback(knockback, hit.GroundSlideDeceleration);
 
         // 공격 중에 맞아 Stun/Airborne으로 전환되면 진행 중이던 공격을 즉시 취소한다. 그대로 두면
         // attackStateTimer가 배경에서 계속 흐르다 만료되는 순간 AdvanceComboOrEnd가 새 공격 애니메이션을

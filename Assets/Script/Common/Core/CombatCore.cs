@@ -11,8 +11,10 @@ public class CombatCore
     public int Damage = 10;
     public float AttackRange = 1.5f;   // 캐릭터 앞으로 얼마나 떨어진 지점을 때리는지
     public float AttackRadius = 1f;    // 판정 구체 반지름
-    public float KnockbackForce = 12f; // 밀리는 힘 (수평)
-    public float LaunchForce = 6f;     // 뜨는 힘 (수직)
+    public float KnockbackForce = 12f; // 대상이 지상에 있을 때 밀리는 힘 (수평)
+    public float LaunchForce = 6f;     // 대상이 지상에 있을 때 뜨는 힘 (수직)
+    public float AirborneKnockbackForce = 12f; // 대상이 이미 공중에 있을 때 밀리는 힘 (수평)
+    public float AirborneLaunchForce = 6f;     // 대상이 이미 공중에 있을 때 뜨는 힘 (수직)
     public float GroundSlideDeceleration = 30f; // 그라운드 넉백일 때 초당 감속량
     public float AttackCooldown = 0.1f;
     public float AttackDuration = 0f; // 공격 애니메이션 클립 길이에서 자동 계산됨 (Init 참고)
@@ -37,6 +39,8 @@ public class CombatCore
         AttackRadius = data.attackRadius;
         KnockbackForce = data.knockbackForce;
         LaunchForce = data.launchForce;
+        AirborneKnockbackForce = data.airborneKnockbackForce;
+        AirborneLaunchForce = data.airborneLaunchForce;
         GroundSlideDeceleration = data.groundSlideDeceleration;
         AttackCooldown = data.attackCooldown;
 
@@ -79,10 +83,14 @@ public class CombatCore
             if (hittable == null)
                 continue;
 
+            // 맞은 대상이 지금 공중에 있는지는 대상만 아는 정보라, 지상용/공중용 넉백을 둘 다 실어 보내고
+            // 실제로 어느 쪽을 쓸지는 대상의 OnHit에서 고르게 한다.
+            Vector3 dir = facingDir.normalized;
             HitData hit = new HitData
             {
                 Damage = Damage,
-                KnockbackVelocity = facingDir.normalized * KnockbackForce + Vector3.up * LaunchForce,
+                KnockbackVelocity = dir * KnockbackForce + Vector3.up * LaunchForce,
+                AirborneKnockbackVelocity = dir * AirborneKnockbackForce + Vector3.up * AirborneLaunchForce,
                 GroundSlideDeceleration = GroundSlideDeceleration,
                 Attacker = attacker
             };
