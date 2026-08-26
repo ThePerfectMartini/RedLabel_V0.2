@@ -49,8 +49,43 @@ public abstract class AttackData : ScriptableObject
 
     [Header("애니메이션 / 콤보")]
     [KoreanLabel("공격 애니메이션 클립")]
-    [Tooltip("공격 상태 지속시간을 이 클립의 길이에서 자동으로 계산한다. 별도로 지속시간 숫자를 입력할 필요 없음. Animator State 이름도 이 클립과 같아야 한다.")]
+    [Tooltip("공격 상태 지속시간을 이 클립의 길이에서 자동으로 계산한다(아래 '지속시간 직접 지정'이 0일 때). Animator State 이름도 이 클립과 같아야 한다.")]
     public AnimationClip attackClip;
+
+    [KoreanLabel("지속시간 직접 지정(초)")]
+    [Tooltip("0이면 공격 애니메이션 클립의 길이를 그대로 쓴다(기본). " +
+             "0보다 큰 값을 넣으면 클립 길이 대신 그 값이 공격 지속시간이 된다.\n\n" +
+             "클립 길이를 쓰면 편하지만, 애니메이터가 클립을 손보는 순간 전투 밸런스까지 같이 흔들린다. " +
+             "밸런스를 클립과 분리해 고정하고 싶은 공격에만 값을 넣을 것.")]
+    public float durationOverride = 0f;
+
+    /// <summary>
+    /// 실제로 적용할 공격 지속시간(초). durationOverride가 0보다 크면 그 값을, 아니면 클립 길이를 쓴다.
+    /// 둘 다 없으면 0을 반환하며, 호출하는 쪽에서 경고를 남긴다.
+    /// </summary>
+    public float ResolveDuration()
+    {
+        if (durationOverride > 0f) return durationOverride;
+        return attackClip != null ? attackClip.length : 0f;
+    }
+
+    /// <summary>
+    /// 이 공격의 클립에 타격 판정용 Animation Event("OnAttackHitFrame")가 실제로 심어져 있는지.
+    /// 이게 없으면 공격은 재생되지만 판정이 한 번도 나가지 않고, 캔슬 허용 시점도 영영 열리지 않는다.
+    /// durationOverride로 지속시간만 정해둔 경우에도 클립 자체는 필요하다.
+    /// </summary>
+    public bool HasHitFrameEvent()
+    {
+        if (attackClip == null) return false;
+
+        foreach (AnimationEvent evt in attackClip.events)
+        {
+            if (evt.functionName == "OnAttackHitFrame")
+                return true;
+        }
+
+        return false;
+    }
 
     [KoreanLabel("후속 공격")]
     [Tooltip("공격 지속시간 안에 공격 입력이 들어오면 이어질 다음 공격. 비워두면 이 공격에서 콤보가 끝난다.")]

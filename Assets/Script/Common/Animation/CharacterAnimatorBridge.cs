@@ -26,8 +26,9 @@ using UnityEngine;
 /// </summary>
 public class CharacterAnimatorBridge : MonoBehaviour
 {
-    [KoreanLabel("전환 블렌드 시간")]
-    [Tooltip("한 상태 애니메이션에서 다음 상태 애니메이션으로 섞이는 데 걸리는 시간(초).")]
+    [KoreanLabel("전환 블렌드 시간(초)")]
+    [Tooltip("한 상태 애니메이션에서 다음 상태 애니메이션으로 섞이는 데 걸리는 시간(초). " +
+             "나가는 클립의 길이와 무관하게 항상 이 초만큼 블렌드된다.")]
     public float transitionDuration = 0.1f;
 
     Animator animator;
@@ -74,7 +75,12 @@ public class CharacterAnimatorBridge : MonoBehaviour
         if (next == CharacterState.Attack) return;
 
         if (animator == null) return;
-        animator.CrossFade(stateHashes[next], transitionDuration);
+
+        // CrossFade가 아니라 CrossFadeInFixedTime을 쓰는 이유:
+        // CrossFade(hash, duration)의 duration은 초가 아니라 "지금 재생 중인 클립 길이에 대한 비율"이다.
+        // 그대로 두면 0.27초짜리 공격 클립에서 나갈 땐 0.027초, 1초짜리 Idle에서 나갈 땐 0.1초로
+        // 블렌드 시간이 제각각이 된다. 초 단위로 고정해야 전환 느낌이 일정하다.
+        animator.CrossFadeInFixedTime(stateHashes[next], transitionDuration);
     }
 
     /// <summary>
@@ -84,6 +90,6 @@ public class CharacterAnimatorBridge : MonoBehaviour
     void HandleAttackClipChanged(AnimationClip clip)
     {
         if (animator == null || clip == null) return;
-        animator.CrossFade(Animator.StringToHash(clip.name), transitionDuration);
+        animator.CrossFadeInFixedTime(Animator.StringToHash(clip.name), transitionDuration);
     }
 }

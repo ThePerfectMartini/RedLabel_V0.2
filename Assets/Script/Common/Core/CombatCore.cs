@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -44,14 +45,35 @@ public class CombatCore
         GroundSlideDeceleration = data.groundSlideDeceleration;
         AttackCooldown = data.attackCooldown;
 
-        if (data.attackClip != null)
+        AttackDuration = data.ResolveDuration();
+
+        WarnOnceIfMisconfigured(data);
+    }
+
+    // 이미 경고를 띄운 AttackData. Init은 콤보 단계마다 호출되므로, 이게 없으면 같은 경고가
+    // 공격할 때마다 Console을 뒤덮어 정작 봐야 할 로그가 묻힌다. 에셋당 한 번만 알리면 충분하다.
+    static readonly HashSet<AttackData> warnedAttacks = new HashSet<AttackData>();
+
+    /// <summary>
+    /// 에셋 설정 실수를 재생 중에 잡아준다. 둘 다 컴파일로는 걸러지지 않고,
+    /// 증상만 보면 원인을 짐작하기 어려운 것들이다.
+    /// </summary>
+    static void WarnOnceIfMisconfigured(AttackData data)
+    {
+        if (!warnedAttacks.Add(data)) return;
+
+        if (data.ResolveDuration() <= 0f)
         {
-            AttackDuration = data.attackClip.length;
+            Debug.LogWarning($"{nameof(AttackData)}({data.name})에 공격 애니메이션 클립도 '지속시간 직접 지정'도 없어 " +
+                             $"공격 지속시간을 정할 수 없습니다. 공격이 시작하자마자 끝납니다.", data);
         }
-        else
+
+        // 타격 이벤트가 없으면 공격은 재생되지만 판정이 한 번도 나가지 않는다.
+        // 캔슬 허용 시점(타격 프레임 이후)도 영영 열리지 않아 "이 공격만 캔슬이 안 되는" 증상으로 나타난다.
+        if (!data.HasHitFrameEvent())
         {
-            AttackDuration = 0f;
-            Debug.LogWarning($"{nameof(AttackData)}({data.name})에 attackClip이 연결되지 않아 AttackDuration을 계산할 수 없습니다.");
+            Debug.LogWarning($"{nameof(AttackData)}({data.name})의 클립에 'OnAttackHitFrame' Animation Event가 없습니다. " +
+                             $"타격 판정이 나가지 않고, 이 공격으로는 다른 공격을 캔슬할 수도 없습니다.", data);
         }
     }
 

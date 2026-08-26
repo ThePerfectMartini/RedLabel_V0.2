@@ -54,9 +54,34 @@ public class MovementCore
     // 그라운드 슬라이드 중 적용할 감속량. 공격마다 다를 수 있어 ApplyKnockback 호출 시점에 전달받는다.
     float currentGroundSlideDeceleration;
 
-    // 현재 공중 상태가 "점프"가 아니라 "넉백"인지 구분하는 내부 플래그.
-    // 바운스는 넉백일 때만 일어나야 한다 (점프는 바운스 없이 그냥 착지).
-    bool isKnockedBack = false;
+    /// <summary>
+    /// 지금 공중에 뜬 것이 <b>무엇 때문인지</b>. 공중에 뜨는 진입점은 Jump()와 ApplyKnockback() 둘뿐이라,
+    /// 출처는 항상 이 셋 중 하나로 결정된다.
+    ///
+    /// 원래는 isKnockedBack / LaunchedByJump 두 bool로 들고 있었는데, 둘은 서로 배타적이라
+    /// (true, true)라는 무효 조합이 코드상 표현 가능했다. enum으로 합치면 그 조합 자체가 사라진다.
+    /// </summary>
+    public enum AirborneOrigin
+    {
+        /// <summary>지상에 있거나, 아무 이유 없이 그냥 떨어지는 중(예: 스폰 위치가 바닥보다 살짝 위).</summary>
+        None,
+        /// <summary>Jump()로 뜬 것. 바운스 없이 착지하며, 착지하면 컨트롤러가 착지 경직으로 넘어간다.</summary>
+        Jump,
+        /// <summary>ApplyKnockback()으로 띄워진 것. 바닥/벽에서 바운스하고, 착지하면 쓰러진다.</summary>
+        Knockback,
+    }
+
+    /// <summary>
+    /// 공중에 뜬 이유. 지상에 있으면 None이다.
+    ///
+    /// 이걸 구분하지 않고 "공중에 있었다가 땅에 닿았다"만으로 착지를 판정하면, 스폰 위치가 바닥보다
+    /// 살짝 위일 때의 첫 낙하까지 점프 착지로 오인해 착지 경직에 갇혀버린다(실제로 겪은 버그).
+    /// 바운스도 마찬가지로 넉백일 때만 일어나야 한다 (점프는 바운스 없이 그냥 착지).
+    ///
+    /// 착지하면 None으로 돌아가고, ApplyKnockback은 진행 중이던 점프를 덮어쓴다
+    /// (점프 도중 피격당하면 그 점프의 착지 처리는 무효가 되어야 하므로).
+    /// </summary>
+    public AirborneOrigin Origin { get; private set; } = AirborneOrigin.None;
 
     /// <summary>
     /// 그라운드에 붙은 채로 수평 슬라이드만 하는 넉백(에어본 아님) 상태인지.
@@ -67,7 +92,10 @@ public class MovementCore
     /// <summary>
     /// 공중에 뜬 상태가 "점프"가 아니라 "넉백으로 띄워진 것"인지. Jump 상태와 Airborne 상태를 구분할 때 사용.
     /// </summary>
-    public bool IsKnockedBackAirborne => isKnockedBack;
+    public bool IsKnockedBackAirborne => Origin == AirborneOrigin.Knockback;
+
+    /// <summary>지금 공중에 뜬 것이 실제로 Jump()를 거친 결과인지. 착지 경직으로 이어질지를 가른다.</summary>
+    public bool LaunchedByJump => Origin == AirborneOrigin.Jump;
 
     /// <summary>
     /// MovementStatData의 값을 이 인스턴스에 복사한다. data가 null이면 기본값을 그대로 둔다.
@@ -144,11 +172,15 @@ public class MovementCore
     /// </summary>
     public void ApplyKnockback(Vector3 knockbackVelocity, float groundSlideDeceleration)
     {
+        // 어느 분기로 가든 Origin을 새로 덮어쓴다는 점이 중요하다. 얻어맞은 순간 진행 중이던
+        // 점프는 무효가 되어야 한다 — 안 그러면 (점프한 적도 없는 것처럼 보이는데) 넉백으로
+        // 떨어져 착지할 때 엉뚱하게 점프 착지 경직으로 이어진다.
         if (IsGrounded && Mathf.Abs(knockbackVelocity.y) <= AirborneLaunchThreshold)
         {
             // 그라운드 넉백(히트슬라이드): 공중으로 띄우지 않고 수평 속도만 덮어써서 미끄러뜨린다.
             Velocity.x = knockbackVelocity.x;
             Velocity.z = knockbackVelocity.z;
+            Origin = AirborneOrigin.None; // 뜨지 않았으므로 공중 출처는 없다.
             IsGroundSliding = true;
             currentGroundSlideDeceleration = groundSlideDeceleration;
         }
@@ -156,7 +188,7 @@ public class MovementCore
         {
             Velocity = knockbackVelocity;
             IsGrounded = false;
-            isKnockedBack = true;
+            Origin = AirborneOrigin.Knockback;
             IsGroundSliding = false;
         }
     }
@@ -193,7 +225,7 @@ public class MovementCore
         Velocity.x = horizontalVelocity;
         Velocity.y = JumpForce;
         IsGrounded = false;
-        isKnockedBack = false; // 점프는 넉백이 아니므로 수평 속도 감쇠 대상에서 제외
+        Origin = AirborneOrigin.Jump; // 넉백이 아니므로 바운스 대상이 아니고, 착지하면 착지 경직으로 이어진다
         IsGroundSliding = false; // 슬라이드 도중 점프하면 슬라이드 상태는 종료
     }
 
@@ -235,7 +267,7 @@ public class MovementCore
             Position.y = GroundOffset;
             bool wasAirborne = !IsGrounded;
 
-            if (wasAirborne && isKnockedBack && Mathf.Abs(Velocity.y) > BounceVelocityThreshold)
+            if (wasAirborne && Origin == AirborneOrigin.Knockback && Mathf.Abs(Velocity.y) > BounceVelocityThreshold)
             {
                 // 넉백 중 충분히 빠른 속도로 떨어졌으면 수직/수평 속도를 같은 비율로 줄이며 튕겨나감
                 Velocity.y = -Velocity.y * BounceRestitution;
@@ -256,7 +288,10 @@ public class MovementCore
                 }
 
                 IsGrounded = true;
-                isKnockedBack = false; // 착지했으니 넉백 상태 종료
+
+                // 착지했으니 공중 출처도 사라진다. 컨트롤러는 Tick 직전 값을 기억해뒀다가
+                // "직전엔 Jump/Knockback이었는데 지금 지상"인 프레임에만 착지 경직/다운으로 넘어간다.
+                Origin = AirborneOrigin.None;
             }
         }
 
@@ -267,7 +302,7 @@ public class MovementCore
         if (Position.x < minX || Position.x > maxX)
         {
             Position.x = Mathf.Clamp(Position.x, minX, maxX);
-            if (isKnockedBack)
+            if (Origin == AirborneOrigin.Knockback)
             {
                 Velocity.x = Mathf.Abs(Velocity.x) > BounceVelocityThreshold
                     ? -Velocity.x * BounceRestitution
@@ -280,7 +315,7 @@ public class MovementCore
         if (Position.z < minZ || Position.z > maxZ)
         {
             Position.z = Mathf.Clamp(Position.z, minZ, maxZ);
-            if (isKnockedBack)
+            if (Origin == AirborneOrigin.Knockback)
             {
                 Velocity.z = Mathf.Abs(Velocity.z) > BounceVelocityThreshold
                     ? -Velocity.z * BounceRestitution
