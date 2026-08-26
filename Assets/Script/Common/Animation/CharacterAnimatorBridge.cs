@@ -6,7 +6,7 @@ using UnityEngine;
 /// CharacterStateMachine과 Animator를 이어주는 브릿지.
 /// 게임 로직(상태)과 표현(애니메이션)을 분리하기 위해, 상태가 바뀔 때마다
 /// 해당 상태 이름과 같은 이름의 Animator State로 CrossFade만 해준다.
-/// IStateMachineOwner를 구현한 컴포넌트(PlayerController, EnemyController)와
+/// IStateMachineOwner를 구현한 컴포넌트(CharacterControllerBase 파생 클래스)와
 /// 같은 오브젝트에 붙이면 캐릭터 종류와 무관하게 동일하게 작동한다.
 ///
 /// [준비물]

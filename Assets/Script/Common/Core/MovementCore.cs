@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// 순수 이동 로직. MonoBehaviour가 아니며 Unity API에 최소 의존.
-/// PlayerController(또는 EnemyController)가 이 값을 읽어서 transform.position에 반영한다.
+/// CharacterControllerBase가 이 값을 읽어서 transform.position에 반영한다.
 /// Rigidbody 사용하지 않음 -> 모든 이동/중력/넉백을 직접 적분한다.
 /// </summary>
 public class MovementCore
@@ -159,6 +159,22 @@ public class MovementCore
             isKnockedBack = true;
             IsGroundSliding = false;
         }
+    }
+
+    /// <summary>
+    /// 진행 중인 그라운드 슬라이드를 즉시 끝내고 남은 수평 속도를 지운다.
+    /// 돌진(Impulse) 공격처럼 "슬라이드가 그 동작의 일부"인 경우, 동작이 끝나는 시점에
+    /// 남은 슬라이드까지 같이 끊기 위해 컨트롤러가 호출한다.
+    /// 슬라이드 중이 아니면 아무것도 하지 않으므로, 피격으로 인한 슬라이드를 실수로 끊을 걱정은 없다
+    /// (호출하는 쪽에서 "내 돌진이었는지"를 먼저 판단하는 것이 전제).
+    /// </summary>
+    public void StopGroundSlide()
+    {
+        if (!IsGroundSliding) return;
+
+        IsGroundSliding = false;
+        Velocity.x = 0f;
+        Velocity.z = 0f;
     }
 
     /// <summary>

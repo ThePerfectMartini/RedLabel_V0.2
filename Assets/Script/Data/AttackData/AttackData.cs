@@ -56,7 +56,13 @@ public abstract class AttackData : ScriptableObject
     [Tooltip("공격 지속시간 안에 공격 입력이 들어오면 이어질 다음 공격. 비워두면 이 공격에서 콤보가 끝난다.")]
     public AttackData nextAttack;
 
-    /// <summary>공격 지속시간 동안 플레이어 입력으로 이동 가능한지. false면 PlayerController가 이동 입력을 무시한다.</summary>
+    [KoreanLabel("다른 공격을 끊고 나갈 수 있음")]
+    [Tooltip("켜면 다른 공격이 재생되는 도중에도 이 공격으로 곧바로 갈아탈 수 있다 (예: 일반 공격 콤보 중 특수 공격). " +
+             "끄면 다른 공격이 끝날 때까지 기다려야 한다. 캔슬은 상대 공격이 타격 프레임을 지난 뒤에만 허용된다. " +
+             "콤보를 시작하는 공격에만 의미가 있다.")]
+    public bool canCancelOtherAttacks = false;
+
+    /// <summary>공격 지속시간 동안 플레이어 입력으로 이동 가능한지. false면 컨트롤러가 이동 의도를 무시한다.</summary>
     public virtual bool AllowsPlayerMovement => true;
 
     /// <summary>

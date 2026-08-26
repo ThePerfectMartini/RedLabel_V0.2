@@ -18,16 +18,16 @@ public class TestAutoAttackBrain : MonoBehaviour, IEnemyBrain
 
     float timer;
 
-    public EnemyIntent Think(EnemyController owner, float deltaTime)
+    public CharacterIntent Think(EnemyController owner, float deltaTime)
     {
         timer += deltaTime;
 
         if (timer < attackInterval)
-            return EnemyIntent.None;
+            return CharacterIntent.None;
 
         timer = 0f;
 
-        EnemyIntent intent = EnemyIntent.None;
+        CharacterIntent intent = CharacterIntent.None;
         intent.WantsAttack = true;
         return intent;
     }

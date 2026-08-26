@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// 순수 전투 로직. MonoBehaviour가 아니며, MovementCore와 서로 참조하지 않는다.
 /// 공격 하나(AttackData)의 판정만 담당한다. 콤보 진행(다음 공격으로 넘어가는 타이밍 판단,
-/// 입력 버퍼링)은 이 클래스의 책임이 아니라 PlayerController가 CurrentAttack.nextAttack을
+/// 입력 버퍼링)은 이 클래스의 책임이 아니라 CharacterControllerBase가 CurrentAttack.nextAttack을
 /// 보고 판단한 뒤 Init()을 다시 호출하는 방식으로 이뤄진다.
 /// </summary>
 public class CombatCore

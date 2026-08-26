@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// TEMP: 오브젝트 머리 위에 현재 체력을 숫자로 표시하는 디버그용 컴포넌트.
-/// PlayerController/EnemyController의 currentHealth는 private이고 외부에 공개된 API가 없는데,
+/// CharacterControllerBase의 currentHealth는 protected이고 외부에 공개된 API가 없는데,
 /// 이 스크립트는 기존 코드를 전혀 건드리지 않고 독립적으로 동작해야 하므로 리플렉션으로 직접 읽는다.
 /// 제거할 때는 이 스크립트 파일 삭제 + 씬에서 이 컴포넌트만 떼어내면 된다 (다른 코드는 안 건드림).
 ///

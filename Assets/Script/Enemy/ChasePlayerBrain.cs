@@ -56,11 +56,11 @@ public class ChasePlayerBrain : MonoBehaviour, IEnemyBrain
     void OnEnable() => activeBrains.Add(this);
     void OnDisable() => activeBrains.Remove(this);
 
-    public EnemyIntent Think(EnemyController owner, float deltaTime)
+    public CharacterIntent Think(EnemyController owner, float deltaTime)
     {
         PlayerController player = PlayerController.Instance;
         if (player == null)
-            return EnemyIntent.None;
+            return CharacterIntent.None;
 
         Vector3 enemyPos = owner.Position;
 
@@ -90,7 +90,7 @@ public class ChasePlayerBrain : MonoBehaviour, IEnemyBrain
         if (postAttackTimer > 0f)
         {
             postAttackTimer -= deltaTime;
-            return EnemyIntent.None;
+            return CharacterIntent.None;
         }
 
         // 지금 서 있는 쪽(플레이어의 왼쪽/오른쪽)을 기준으로 목표 x를 정한다.
@@ -109,16 +109,16 @@ public class ChasePlayerBrain : MonoBehaviour, IEnemyBrain
             // 1순위 슬롯(queueIndex == 0)만 공격한다. 대기열에 있는 적은 자기 순번 자리에 도착하면
             // 그냥 멈춰서 기다린다 (공격 사거리 밖이라 공격해도 안 맞으므로 시도조차 하지 않는다).
             if (queueIndex > 0)
-                return EnemyIntent.None;
+                return CharacterIntent.None;
 
-            EnemyIntent attackIntent = EnemyIntent.None;
+            CharacterIntent attackIntent = CharacterIntent.None;
             attackIntent.WantsAttack = true;
             return attackIntent;
         }
 
         Vector3 dir = toTarget.normalized;
 
-        EnemyIntent intent = EnemyIntent.None;
+        CharacterIntent intent = CharacterIntent.None;
         intent.MoveInput = new Vector2(dir.x, dir.z);
         return intent;
     }
