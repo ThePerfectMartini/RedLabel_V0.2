@@ -1,49 +1,105 @@
-# Unity 학습 모드 — 가이드 · 구현 · 리뷰 방식
+# CLAUDE.md
 
-이 문서가 컨텍스트에 포함되어 있을 때, Claude(Claude Code)는 아래 규칙을 따른다.
-이 모드는 **학습 목적의 기능 구현**에만 적용하며, 사용자가 명시적으로 요청할 때만 활성화된다.
+Behavioral guidelines to reduce common LLM coding mistakes, adapted for Unity (C#) development. Merge with project-specific instructions as needed.
 
-기본적으로 이 문서가 컨텍스트에 있어도 모든 요청을 일반 모드로 처리한다.
-학습 목적으로 개념 설명 → 직접 구현 → 코드 리뷰 흐름으로 진행하고 싶을 때는
-사용자가 요청 앞에 **"학습모드"**라고 명시해야 하며,
-그 경우에만 이 문서의 규칙(코드 미제공, 직접 수정 금지 등)을 적용한다.
-"학습모드"라는 표현이 없으면 항상 일반 모드로 간주한다.
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
-## 목적
-사용자가 Unity 개념을 스스로 체화하도록, Claude는 코드를 대신 작성하지 않고
-개념 설명 → 사용자의 직접 구현 → 코드 리뷰의 흐름으로만 개입한다.
+## Project Context
+- Unity 6000.3.8f1
+- URP
+- New Input System
 
-## 진행 순서
+## 1. Think Before Coding
 
-1. **요청**: 사용자가 구현하고 싶은 기능을 말한다.
-2. **목표 구체화 (Claude, 필요 시)**
-   - 요청이 모호하거나 범위가 넓어서 바로 가이드를 주기 어려운 경우, 코드나 가이드를 주기 전에 먼저 질문한다.
-   - 질문은 한 번에 너무 많이 하지 않는다. 목표를 좁히는 데 필요한 만큼만.
-   - 요청이 이미 충분히 구체적이라면 이 단계는 건너뛰고 바로 가이드로 넘어간다.
-   - 목표가 충분히 좁혀졌다고 판단되면 확정한 목표를 한 줄로 요약해 확인받은 뒤 다음 단계로 진행한다.
-3. **가이드 제공 (Claude)**
-   - 코드는 절대 작성하지 않는다. 완성된 코드, 스니펫, 함수 시그니처까지 포함 전부 금지.
-   - 필요한 개념/컴포넌트 설명 (예: Rigidbody vs Transform 직접 조작, New Input System 구조 등)
-   - 구현 순서를 단계별로 설명 (로직 흐름)
-   - 자주 하는 실수/함정 안내
-   - 필요 시 의사코드(pseudocode) 수준까지만 허용 — 실제 C# 문법으로 바로 옮길 수 있는 코드는 금지
-     - 허용 예: "이동 방향을 구하고, Rigidbody에 그 방향으로 힘을 더한다"
-     - 금지 예: `rb.AddForce(direction * speed)` 처럼 그대로 붙여넣을 수 있는 형태
-4. **직접 구현 (사용자)**
-   - 사용자가 가이드를 참고해 스스로 타이핑하여 스크립트 작성
-5. **코드 제출 (사용자 → Claude)**
-6. **리뷰 (Claude)**
-   - 코드를 직접 수정하지 않는다. (수정된 코드 블록 제시 금지, Edit/Write 등 파일 수정 도구도 사용 금지)
-   - 문제가 있는 **위치**(파일/함수/줄 단위)와 **원인**을 구체적으로 짚어준다.
-   - 해결 방향 힌트까지는 주지 않는다. 원인 이해 후 해결책은 사용자가 스스로 찾는다.
-   - 문제가 없다면 통과 처리하고, 다음 기능으로 넘어갈지 확인한다.
-7. **재수정 & 재제출**: 통과할 때까지 5~6 반복
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-## 절대 규칙
-- 이 모드에서는 **어떤 형태로든 실행 가능한 코드(완성 코드, 수정 코드, 정답 스니펫)를 제공하지 않는다.**
-- 사용자가 명시적으로 "정답 코드 보여줘"라고 요청하기 전까지는 코드를 주지 않는다. 요청이 있어도 먼저 한 번 더 리마인드하고 확인을 받는다.
-- 리뷰 시 톤은 지적이되 구체적으로: 막연히 "이상함"이 아니라 정확한 위치(줄/블록/함수명)와 원인을 명시한다.
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-## 모드 전환
-- 학습 모드로 들어가려면 요청 앞에 **"학습모드"**라고 명시한다.
-- 학습 모드로 진행 중 사용자가 "이 모드 끄고 코드 짜줘" 등으로 명시적으로 요청하면 즉시 일반 모드로 전환한다.
+Unity-specific:
+- Confirm the Unity version, render pipeline (Built-in / URP / HDRP), and input system (legacy / new Input System) before writing code that depends on them.
+- Don't assume a scene setup, prefab hierarchy, or Inspector wiring exists. If the code needs a reference, say where it comes from (serialized field, `GetComponent`, DI, singleton).
+- If a feature can be solved with existing Unity systems (Animator, Physics layers, ScriptableObjects, Timeline), say so before writing custom code.
+- Ask whether the target is Editor-only, runtime, or both - the answer changes which APIs are allowed.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Unity-specific:
+- No managers, service locators, event buses, or interfaces for a single MonoBehaviour.
+- No ScriptableObject-driven config unless the user asked for designer-editable data.
+- No object pooling, coroutines, Jobs/Burst, or ECS unless there is a stated performance need.
+- No custom editors or PropertyDrawers unless requested.
+- Prefer `[SerializeField] private` over public fields; prefer direct references over `Find*` calls.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+Unity-specific:
+- Never rename or remove a serialized field without saying so - it breaks Inspector references and prefab data. Use `[FormerlySerializedAs]` when a rename is required.
+- Don't change execution order, script names, namespaces, or assembly definitions as a side effect.
+- Don't edit `.meta`, `.unity`, `.prefab`, or `.asset` files by hand unless asked; changes there belong in the Editor.
+- Don't touch `ProjectSettings/` or `Packages/manifest.json` without explicit approval.
+- Match the project's existing lifecycle conventions (`Awake` vs `Start`, `Update` vs events).
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+Unity-specific:
+- Use Unity Test Framework: EditMode tests for pure logic, PlayMode tests for MonoBehaviour behavior. Keep gameplay logic testable by separating it from `MonoBehaviour` where it is cheap to do so.
+- Success criteria should name what can be checked: "compiles with no errors in the Console", "no null reference on scene load", "test X passes in Test Runner".
+- If a check requires the Editor or Play Mode (visual result, physics, animation), say so and describe exactly what the user should observe.
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+## 5. Unity Pitfalls to Avoid
+
+- No allocations or `GetComponent` / `Find*` / LINQ / string concatenation inside `Update`, `FixedUpdate`, or `LateUpdate` without a reason.
+- Physics in `FixedUpdate`; input and camera in `Update` / `LateUpdate`. Don't mix them.
+- Don't compare `UnityEngine.Object` with `?.` or `??` - use explicit `== null` checks. Flag when a null check is a "fake null" (destroyed object).
+- Don't rely on `Start` order between scripts unless the project's execution order guarantees it.
+- Don't use `Resources.Load` or `Camera.main` in hot paths.
+- Don't put `UnityEditor` calls in runtime code without `#if UNITY_EDITOR`.
+- Don't hardcode paths, tags, layers, or scene names as raw strings scattered across files; if the project has constants, use them.
+
+---
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, no broken Inspector references or prefabs after edits, and clarifying questions come before implementation rather than after mistakes.

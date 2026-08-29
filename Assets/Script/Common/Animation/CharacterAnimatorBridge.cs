@@ -36,6 +36,12 @@ public class CharacterAnimatorBridge : MonoBehaviour
     IAttackClipSource attackClipSource;
     readonly Dictionary<CharacterState, int> stateHashes = new Dictionary<CharacterState, int>();
 
+    // "Animator에 그 State가 없다"를 이미 경고한 대상. CrossFade는 대상이 없어도 조용히 실패하는데,
+    // 이건 매 프레임 상태가 바뀔 때마다 반복되므로 한 번만 찍고 만다.
+    // (실제로 적 Animator에 Move State가 없어서 추적 내내 Idle 자세로 미끄러지는 것을 한참 못 알아챘다.)
+    readonly HashSet<CharacterState> warnedMissingStates = new HashSet<CharacterState>();
+    readonly HashSet<string> warnedMissingClipStates = new HashSet<string>();
+
     void Awake()
     {
         animator = GetComponentInChildren<Animator>();
@@ -76,11 +82,23 @@ public class CharacterAnimatorBridge : MonoBehaviour
 
         if (animator == null) return;
 
+        int hash = stateHashes[next];
+
+        // Animator에 해당 State가 없으면 CrossFade는 아무 일도 하지 않고 조용히 넘어간다.
+        // 그러면 이전 클립이 그대로 재생되어 "움직이는데 Idle 자세" 같은 증상이 되므로 원인을 찍어준다.
+        if (!animator.HasState(0, hash))
+        {
+            if (warnedMissingStates.Add(next))
+                Debug.LogWarning($"{name}: Animator에 '{next}' State가 없어 애니메이션이 바뀌지 않습니다. " +
+                    "State 이름은 CharacterState enum 값과 정확히 같아야 합니다.");
+            return;
+        }
+
         // CrossFade가 아니라 CrossFadeInFixedTime을 쓰는 이유:
         // CrossFade(hash, duration)의 duration은 초가 아니라 "지금 재생 중인 클립 길이에 대한 비율"이다.
         // 그대로 두면 0.27초짜리 공격 클립에서 나갈 땐 0.027초, 1초짜리 Idle에서 나갈 땐 0.1초로
         // 블렌드 시간이 제각각이 된다. 초 단위로 고정해야 전환 느낌이 일정하다.
-        animator.CrossFadeInFixedTime(stateHashes[next], transitionDuration);
+        animator.CrossFadeInFixedTime(hash, transitionDuration);
     }
 
     /// <summary>
@@ -90,6 +108,17 @@ public class CharacterAnimatorBridge : MonoBehaviour
     void HandleAttackClipChanged(AnimationClip clip)
     {
         if (animator == null || clip == null) return;
-        animator.CrossFadeInFixedTime(Animator.StringToHash(clip.name), transitionDuration);
+
+        // 공격은 State 이름이 클립 이름과 같아야 한다. 같은 이유로 없으면 조용히 실패하므로 확인한다.
+        int hash = Animator.StringToHash(clip.name);
+        if (!animator.HasState(0, hash))
+        {
+            if (warnedMissingClipStates.Add(clip.name))
+                Debug.LogWarning($"{name}: Animator에 '{clip.name}' State가 없어 공격 애니메이션이 재생되지 않습니다. " +
+                    "공격 State는 이름을 AnimationClip 이름과 똑같이 맞춰야 합니다.");
+            return;
+        }
+
+        animator.CrossFadeInFixedTime(hash, transitionDuration);
     }
 }

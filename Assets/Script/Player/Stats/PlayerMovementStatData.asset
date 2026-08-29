@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52f17ad0c423f5d48b5a8a1a7b290993, type: 3}
   m_Name: PlayerMovementStatData
   m_EditorClassIdentifier: Assembly-CSharp::MovementStatData
-  moveSpeed: 5
+  moveSpeed: 10
   gravityScale: 1
   jumpForce: 10
   bounceRestitution: 0.5

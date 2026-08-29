@@ -47,7 +47,8 @@ public class EnemyController : CharacterControllerBase
     /// <summary>
     /// 바라보는 방향은 이동 방향으로 자동 갱신하지 않는다 (예: 추적 중 너무 가까우면 플레이어를
     /// 바라본 채로 뒷걸음질쳐야 하므로 이동 방향과 바라보는 방향이 다를 수 있다).
-    /// 그 대신 Brain이 Think()에서 SetFacing을 직접 호출해서 원하는 방향을 지정한다.
+    /// 그 대신 Brain이 CharacterIntent.FacingDirection에 원하는 방향을 담아 돌려주고,
+    /// 베이스가 그걸 SetFacing으로 반영한다.
     /// </summary>
     protected override void UpdateFacing(Vector2 effectiveMoveInput) { }
 

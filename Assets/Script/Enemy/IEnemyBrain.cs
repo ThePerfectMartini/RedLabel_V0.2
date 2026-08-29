@@ -15,6 +15,8 @@ public interface IEnemyBrain
     /// <summary>
     /// 매 프레임 호출되어 이번 프레임의 행동 의도를 반환한다.
     /// 여기서 직접 위치를 옮기거나 공격 판정을 하지 말 것 — 그건 EnemyController와 MovementCore/CombatCore의 일이다.
+    /// 바라볼 방향도 마찬가지다. owner를 직접 건드리지 말고 CharacterIntent.FacingDirection에 담아 돌려주면
+    /// 컨트롤러가 적절한 시점(공격 시작 직전)에 반영한다.
     ///
     /// 시작 공격이 하나뿐이므로 CharacterIntent.AttackToStart는 비워두면 된다
     /// (컨트롤러가 자기 firstAttackData로 알아서 채운다).

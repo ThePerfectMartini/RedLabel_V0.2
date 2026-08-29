@@ -205,6 +205,14 @@ public abstract class CharacterControllerBase : MonoBehaviour,
 
         currentHealth = characterStatData != null ? characterStatData.maxHealth : 100;
 
+        // 연결을 빠뜨려도 코드 기본값으로 조용히 동작해버리면 "왜 에셋 값이 안 먹지"를 한참 헤매게 된다.
+        // 실제로 씬의 적이 이 두 개를 빠뜨린 채로 있었고, firstAttackData 쪽은 공격 자체가 안 나갔다.
+        if (movementStatData == null)
+            Debug.LogWarning($"{name}: movementStatData가 연결되지 않아 MovementCore의 코드 기본값을 사용합니다.");
+
+        if (firstAttackData == null)
+            Debug.LogWarning($"{name}: firstAttackData가 연결되지 않아 공격을 시작할 수 없습니다.");
+
         movement.Init(movementStatData);
         movement.Use8DirectionSnap = Uses8DirectionSnap;
         combat.Init(firstAttackData);
@@ -227,6 +235,13 @@ public abstract class CharacterControllerBase : MonoBehaviour,
     {
         CharacterIntent intent = UpdateIntent();
         CurrentMoveIntent = intent.MoveInput;
+
+        // 반드시 TryStartCombo보다 앞에서 적용해야 한다. 공격이 시작되면 phase가 Attack이 되고,
+        // 이동을 막는 공격(LockedAttackData)이면 SetFacing이 IsMovementLocked 가드에 걸려 요청을
+        // 통째로 무시한다. 즉 공격 내내 방향을 못 바꾸므로 "시작 직전 프레임의 방향"이 그 공격의
+        // 방향이 된다. 뒤로 옮기면 ApplySelfMovement(돌진)도 한 프레임 전 방향으로 나간다.
+        // 방향 요청이 없으면(Vector3.zero) SetFacing이 알아서 무시하므로 따로 검사하지 않는다.
+        SetFacing(intent.FacingDirection);
 
         if (intent.WantsAttack)
             TryStartCombo(intent.AttackToStart != null ? intent.AttackToStart : firstAttackData);

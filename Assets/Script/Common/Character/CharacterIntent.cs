@@ -12,6 +12,14 @@ public struct CharacterIntent
     /// <summary>이동 입력(-1~1). MovementCore가 필요에 따라 8방향으로 스냅한다.</summary>
     public Vector2 MoveInput;
 
+    /// <summary>
+    /// 이번 프레임에 바라보고 싶은 방향. X 성분만 쓰이며, 0이면 "요청 없음"이라 기존 좌우가 유지된다.
+    /// 이동 방향과 바라보는 방향이 다를 수 있어서 MoveInput과 별도로 둔다
+    /// (예: 적이 뒷걸음질 치면서도 플레이어를 계속 바라봄).
+    /// 키 입력으로 방향이 정해지는 플레이어는 이 값을 채우지 않고 UpdateFacing 훅을 쓴다.
+    /// </summary>
+    public Vector3 FacingDirection;
+
     /// <summary>이번 프레임에 공격을 시작(또는 콤보 진행)하고 싶은지.</summary>
     public bool WantsAttack;
 
