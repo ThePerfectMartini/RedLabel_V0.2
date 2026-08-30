@@ -17,7 +17,12 @@ MonoBehaviour:
   attackRadius: 2
   knockbackForce: 12
   launchForce: 12
+  airborneKnockbackForce: 12
+  airborneLaunchForce: 6
   groundSlideDeceleration: 30
   attackCooldown: 0.1
   attackClip: {fileID: 7400000, guid: 1decdefefb5ed8b4da995e9e7ee5828f, type: 2}
-  nextAttack: {fileID: 0}
+  durationOverride: 0
+  nextAttack: {fileID: 11400000, guid: e9dc617d8d51d8b4f8d45ac9c380c937, type: 2}
+  canCancelOtherAttacks: 0
+  moveSpeedMultiplier: 1

@@ -10,14 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2bb32ce8ccb076c4d99932658dcd6500, type: 3}
-  m_Name: AttackData_Locked
+  m_Name: EnemyLockedAttack
   m_EditorClassIdentifier: Assembly-CSharp::LockedAttackData
   damage: 10
-  attackRange: 1.5
+  attackRange: 1
   attackRadius: 1
-  knockbackForce: 12
+  knockbackForce: 6
   launchForce: 0
+  airborneKnockbackForce: 12
+  airborneLaunchForce: 6
   groundSlideDeceleration: 30
-  attackCooldown: 0
-  attackClip: {fileID: 7400000, guid: 370a5e11d76612c4ca6b2fe76fd19b00, type: 2}
-  nextAttack: {fileID: 11400000, guid: 1d57be93f2b1a2f4d9abf748a7e6204e, type: 2}
+  attackCooldown: 0.1
+  attackClip: {fileID: 7400000, guid: c6cd15feb675ef14a8ad7af56966d573, type: 2}
+  durationOverride: 0
+  nextAttack: {fileID: 0}
+  canCancelOtherAttacks: 0
