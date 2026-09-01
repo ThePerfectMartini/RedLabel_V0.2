@@ -1,0 +1,1178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="DoitMySelf 프로젝트의 모든 함수·프로퍼티·이벤트를 파일별로 정리한 코드 레퍼런스.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>">
+<title>DoitMySelf 코드 사전</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --ground:#F7F8FA; --surface:#FFFFFF; --surface-2:#EFF1F5; --surface-3:#E5E8EF;
+  --line:#DCE0E8; --line-strong:#C3C9D6;
+  --ink:#171C27; --ink-2:#4C5568; --ink-3:#5F6A80;
+  --accent:#9C6210; --accent-hi:#B4720F; --accent-soft:#FAEFDC;
+  --k-public:#9C6210; --k-private:#69738A; --k-iface:#2A8078; --k-unity:#A63F37;
+  --k-public-bg:#FAEFDC; --k-private-bg:#EDEFF4; --k-iface-bg:#DEF0EE; --k-unity-bg:#FBE7E5;
+  --shadow:0 1px 2px rgba(23,28,39,.05), 0 8px 24px -12px rgba(23,28,39,.12);
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --sans:"IBM Plex Sans KR",-apple-system,"Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#12151C; --surface:#181C25; --surface-2:#1F242F; --surface-3:#262C39;
+    --line:#2A3040; --line-strong:#3B4356;
+    --ink:#E7EAF1; --ink-2:#B6BFCE; --ink-3:#838EA2;
+    --accent:#E8A33D; --accent-hi:#F0B45C; --accent-soft:#2B2318;
+    --k-public:#E8A33D; --k-private:#7C8699; --k-iface:#54B4AC; --k-unity:#E27B72;
+    --k-public-bg:#2B2318; --k-private-bg:#232936; --k-iface-bg:#152E2C; --k-unity-bg:#33201E;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#12151C; --surface:#181C25; --surface-2:#1F242F; --surface-3:#262C39;
+  --line:#2A3040; --line-strong:#3B4356;
+  --ink:#E7EAF1; --ink-2:#B6BFCE; --ink-3:#838EA2;
+  --accent:#E8A33D; --accent-hi:#F0B45C; --accent-soft:#2B2318;
+  --k-public:#E8A33D; --k-private:#7C8699; --k-iface:#54B4AC; --k-unity:#E27B72;
+  --k-public-bg:#2B2318; --k-private-bg:#232936; --k-iface-bg:#152E2C; --k-unity-bg:#33201E;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--sans); font-size:15px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--accent-hi); outline-offset:2px; border-radius:3px;}
+
+/* ---------- shell ---------- */
+.app{display:grid; grid-template-columns:250px minmax(0,1fr); min-height:100vh;}
+
+.rail{
+  border-right:1px solid var(--line); background:var(--surface);
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+  display:flex; flex-direction:column;
+}
+.rail-head{padding:22px 20px 16px; border-bottom:1px solid var(--line);}
+.rail-title{
+  font-family:var(--mono); font-size:14px; font-weight:600; letter-spacing:-.01em;
+  color:var(--ink); margin:0;
+}
+.rail-sub{font-size:11.5px; color:var(--ink-3); margin-top:5px; line-height:1.45;}
+.rail-sub code{font-family:var(--mono); color:var(--accent); font-size:11px;}
+
+.rail-nav{padding:12px 10px 18px; flex:1;}
+.nav-group{
+  font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-3);
+  padding:14px 10px 6px;
+}
+.nav-group:first-child{padding-top:4px;}
+.rail-nav a{
+  display:flex; gap:9px; align-items:baseline;
+  padding:5px 10px; border-radius:5px; text-decoration:none;
+  font-size:13px; color:var(--ink-2); line-height:1.4;
+  border-left:2px solid transparent; transition:background .12s, color .12s;
+}
+.rail-nav a:hover{background:var(--surface-2); color:var(--ink);}
+.rail-nav a.on{background:var(--accent-soft); color:var(--accent); font-weight:600; border-left-color:var(--accent);}
+.nav-n{font-family:var(--mono); font-size:11px; color:var(--ink-3); min-width:14px; font-variant-numeric:tabular-nums;}
+.rail-nav a.on .nav-n{color:var(--accent);}
+
+.legend{
+  border-top:1px solid var(--line); padding:14px 20px 18px;
+  display:flex; flex-direction:column; gap:6px;
+}
+.legend-h{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-bottom:2px;}
+.legend div.lg{display:flex; gap:8px; align-items:center; font-size:11.5px; color:var(--ink-2);}
+.legend .sym{font-family:var(--mono); width:22px; text-align:center; font-weight:600;}
+
+/* ---------- topbar ---------- */
+main{min-width:0;}
+.topbar{
+  position:sticky; top:0; z-index:20;
+  background:color-mix(in srgb, var(--ground) 88%, transparent);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+  padding:12px 34px;
+  display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+}
+.searchwrap{position:relative; flex:1; min-width:220px;}
+.searchwrap svg{position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--ink-3); pointer-events:none;}
+#q{
+  width:100%; padding:9px 12px 9px 34px;
+  background:var(--surface); border:1px solid var(--line-strong); border-radius:7px;
+  font-family:var(--sans); font-size:13.5px; color:var(--ink);
+}
+#q::placeholder{color:var(--ink-3);}
+#q:focus{border-color:var(--accent); outline:none; box-shadow:0 0 0 3px var(--accent-soft);}
+
+.chips{display:flex; gap:5px;}
+.chip{
+  font-family:var(--mono); font-size:11.5px; padding:5px 10px;
+  border:1px solid var(--line-strong); border-radius:999px; background:var(--surface);
+  color:var(--ink-2); cursor:pointer; white-space:nowrap;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.chip:hover{border-color:var(--ink-3);}
+.chip.on{background:var(--ink); color:var(--ground); border-color:var(--ink);}
+.count{font-family:var(--mono); font-size:11.5px; color:var(--ink-3); white-space:nowrap; font-variant-numeric:tabular-nums;}
+
+/* ---------- content ---------- */
+.doc{padding:0 34px 120px; max-width:1180px;}
+
+.hero{padding:52px 0 40px; border-bottom:1px solid var(--line);}
+.hero h1{
+  margin:0; font-size:clamp(30px,4.2vw,44px); font-weight:700; letter-spacing:-.025em;
+  line-height:1.15; text-wrap:balance;
+}
+.hero .lede{margin:14px 0 0; font-size:16px; color:var(--ink-2); max-width:62ch;}
+.hero-meta{display:flex; gap:22px; flex-wrap:wrap; margin-top:22px;}
+.hero-meta div{display:flex; flex-direction:column; gap:2px;}
+.hm-k{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);}
+.hm-v{font-family:var(--mono); font-size:13px; color:var(--ink);}
+
+section{padding-top:52px; scroll-margin-top:70px;}
+.sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:6px;}
+.sec-n{
+  font-family:var(--mono); font-size:12px; font-weight:600; color:var(--accent);
+  font-variant-numeric:tabular-nums; letter-spacing:.02em;
+}
+h2{margin:0; font-size:23px; font-weight:700; letter-spacing:-.02em;}
+.sec-note{color:var(--ink-2); font-size:14px; margin:6px 0 22px; max-width:74ch;}
+.sec-note code, .m-desc code, td code, .rule code, li code{
+  font-family:var(--mono); font-size:.9em; background:var(--surface-2);
+  padding:1px 5px; border-radius:4px; border:1px solid var(--line);
+}
+
+h3{
+  margin:30px 0 10px; font-size:13px; font-weight:600; font-family:var(--mono);
+  letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3);
+}
+
+/* component card */
+.comp{
+  background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  box-shadow:var(--shadow); overflow:hidden; margin-bottom:18px;
+}
+.comp-head{
+  padding:14px 18px; border-bottom:1px solid var(--line); background:var(--surface-2);
+  display:flex; gap:12px; align-items:baseline; flex-wrap:wrap;
+}
+.comp-name{font-family:var(--mono); font-size:15px; font-weight:600; letter-spacing:-.01em;}
+.comp-path{font-family:var(--mono); font-size:11.5px; color:var(--ink-3);}
+.comp-tag{
+  font-family:var(--mono); font-size:10.5px; padding:2px 7px; border-radius:4px;
+  background:var(--surface-3); color:var(--ink-2); border:1px solid var(--line);
+}
+.comp-tag.req{color:var(--k-iface); background:var(--k-iface-bg); border-color:transparent;}
+.comp-body{padding:4px 0;}
+.comp-desc{padding:12px 18px 4px; font-size:13.5px; color:var(--ink-2); max-width:78ch;}
+
+/* member rows */
+.member{
+  display:grid; grid-template-columns:minmax(230px,1.05fr) 150px minmax(0,1.7fr);
+  gap:16px; padding:10px 18px; align-items:start;
+  border-top:1px solid var(--line);
+}
+.comp-body > .member:first-child{border-top:none;}
+.member:hover{background:var(--surface-2);}
+.m-sig{font-family:var(--mono); font-size:12.5px; line-height:1.5; word-break:break-word;}
+.sym{font-weight:600; margin-right:5px;}
+.sym.pub{color:var(--k-public);} .sym.priv{color:var(--k-private);}
+.sym.ifc{color:var(--k-iface);} .sym.uni{color:var(--k-unity);}
+.m-name{font-weight:600; color:var(--ink);}
+.m-args{color:var(--ink-3);}
+.m-caller{font-family:var(--mono); font-size:11.5px; color:var(--ink-2); line-height:1.5; padding-top:1px;}
+.m-desc{font-size:13px; color:var(--ink-2); line-height:1.55;}
+.m-desc b{color:var(--ink); font-weight:600;}
+.badge{
+  display:inline-block; font-family:var(--mono); font-size:10px; padding:1px 5px;
+  border-radius:3px; margin-left:6px; vertical-align:1px; white-space:nowrap;
+  border:1px solid transparent;
+}
+.b-so{color:var(--ink-2); background:var(--surface-3); border-color:var(--line);}
+.b-k{color:var(--k-unity); background:var(--k-unity-bg);}
+.b-ev{color:var(--k-iface); background:var(--k-iface-bg);}
+
+/* tables */
+.tw{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface); box-shadow:var(--shadow); margin-bottom:18px;}
+table{border-collapse:collapse; width:100%; font-size:13px; min-width:520px;}
+th{
+  text-align:left; font-family:var(--mono); font-size:10.5px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3);
+  padding:10px 16px; border-bottom:1px solid var(--line); background:var(--surface-2);
+  white-space:nowrap;
+}
+td{padding:9px 16px; border-bottom:1px solid var(--line); color:var(--ink-2); vertical-align:top; line-height:1.55;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--surface-2);}
+td:first-child{color:var(--ink);}
+td.mono, th.mono{font-family:var(--mono); font-size:12px;}
+
+/* enum state table accents */
+.dot{display:inline-block; width:7px; height:7px; border-radius:2px; margin-right:7px; vertical-align:1px;}
+.d-phys{background:var(--k-iface);} .d-sticky{background:var(--k-public);}
+
+/* diagram */
+.figure{
+  background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  box-shadow:var(--shadow); padding:20px 16px 14px; margin-bottom:18px; overflow-x:auto;
+}
+.figure svg{display:block; margin:0 auto; min-width:660px;}
+.figcap{
+  font-size:12px; color:var(--ink-3); text-align:center; margin-top:12px;
+  padding-top:12px; border-top:1px solid var(--line);
+}
+
+/* rules / callouts */
+.rules{display:flex; flex-direction:column; gap:10px;}
+.rule{
+  background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--accent);
+  border-radius:8px; padding:13px 16px;
+}
+.rule-h{font-weight:600; font-size:13.5px; color:var(--ink); margin-bottom:4px;}
+.rule-b{font-size:13px; color:var(--ink-2); line-height:1.55;}
+
+.note{
+  background:var(--accent-soft); border:1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius:8px; padding:12px 16px; font-size:13px; color:var(--ink-2); margin-bottom:18px;
+}
+.note b{color:var(--ink);}
+
+.empty{
+  display:none; padding:60px 20px; text-align:center; color:var(--ink-3);
+  font-size:14px;
+}
+.empty.show{display:block;}
+section.hide, .member.hide, .comp.hide, .tw.hide, .figure.hide, .note.hide, .rule.hide{display:none;}
+tbody tr.hide{display:none;}
+.hl{background:var(--accent-soft); color:var(--accent); border-radius:2px; padding:0 1px;}
+
+@media (max-width:1000px){
+  /* 3열이 안 들어가면 세로로 접는다. 색을 낮추는 대신 화살표로 구분 — 11.5px에서 대비를 더 낮추면 AA 미달. */
+  .member{grid-template-columns:minmax(0,1fr); gap:4px;}
+  .m-caller::before{content:"← "; color:var(--ink-3);}
+}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr;}
+  .rail{position:static; height:auto; border-right:none; border-bottom:1px solid var(--line);}
+  .rail-nav{display:none;}
+  .legend{flex-direction:row; flex-wrap:wrap; gap:14px;}
+  .doc,.topbar{padding-left:20px; padding-right:20px;}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="rail">
+  <div class="rail-head">
+    <p class="rail-title">DoitMySelf</p>
+    <div class="rail-sub">2.5D 벨트스크롤 · Unity 6000.3.8f1 · URP<br>기준 커밋 <code>269469c</code> · 2026-09-02</div>
+  </div>
+
+  <nav class="rail-nav" id="nav">
+    <div class="nav-group">구조</div>
+    <a href="#s0"><span class="nav-n">00</span>아키텍처 한눈에</a>
+    <div class="nav-group">캐릭터 컴포넌트</div>
+    <a href="#s1"><span class="nav-n">01</span>Actor</a>
+    <a href="#s2"><span class="nav-n">02</span>Locomotion</a>
+    <a href="#s3"><span class="nav-n">03</span>Fighter</a>
+    <a href="#s4"><span class="nav-n">04</span>Health</a>
+    <a href="#s5"><span class="nav-n">05</span>CharacterStateMachine</a>
+    <a href="#s6"><span class="nav-n">06</span>AnimationEventRelay</a>
+    <a href="#s7"><span class="nav-n">07</span>의도(Intent) 계층</a>
+    <div class="nav-group">데이터 · 계약</div>
+    <a href="#s8"><span class="nav-n">08</span>ScriptableObject</a>
+    <a href="#s9"><span class="nav-n">09</span>전투 계약</a>
+    <div class="nav-group">주변 시스템</div>
+    <a href="#s10"><span class="nav-n">10</span>월드 · 카메라</a>
+    <a href="#s11"><span class="nav-n">11</span>에디터 유틸</a>
+    <a href="#s12"><span class="nav-n">12</span>디버그 · 임시</a>
+    <div class="nav-group">색인</div>
+    <a href="#s13"><span class="nav-n">13</span>Unity 매직 메서드</a>
+    <a href="#s14"><span class="nav-n">14</span>Animation Event</a>
+    <a href="#s15"><span class="nav-n">15</span>Unity API</a>
+    <a href="#s16"><span class="nav-n">16</span>명명 규칙 · 계약</a>
+    <a href="#s17"><span class="nav-n">--</span>알려진 잔재</a>
+  </nav>
+
+  <div class="legend">
+    <div class="legend-h">표기</div>
+    <div class="lg"><span class="sym" style="color:var(--k-public)">▶</span>public</div>
+    <div class="lg"><span class="sym" style="color:var(--k-private)">·</span>private</div>
+    <div class="lg"><span class="sym" style="color:var(--k-iface)">◆</span>인터페이스 멤버</div>
+    <div class="lg"><span class="sym" style="color:var(--k-unity)">(k)</span>Unity 매직 메서드</div>
+    <div class="lg"><span class="sym" style="color:var(--ink-3)">[SO]</span>에셋 필드</div>
+  </div>
+</aside>
+
+<main>
+  <div class="topbar">
+    <div class="searchwrap">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="함수 · 프로퍼티 · 파일 검색 &nbsp;( / 키로 포커스 )" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="chips" id="chips">
+      <button class="chip on" data-k="all">전체</button>
+      <button class="chip" data-k="pub">▶ public</button>
+      <button class="chip" data-k="priv">· private</button>
+      <button class="chip" data-k="uni">(k) Unity</button>
+      <button class="chip" data-k="ifc">◆ 인터페이스</button>
+    </div>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="doc" id="doc">
+
+    <div class="hero">
+      <h1>코드 사전</h1>
+      <p class="lede">이 프로젝트 코드에 나오는 모든 함수 · 프로퍼티 · 이벤트를 파일별로 정리한 레퍼런스. “누가 / 언제 호출”은 실제 호출 지점 기준이며, 구조가 바뀌면 이 문서도 같이 고칠 것.</p>
+      <div class="hero-meta">
+        <div><span class="hm-k">스크립트</span><span class="hm-v">24개 파일</span></div>
+        <div><span class="hm-k">어셈블리</span><span class="hm-v">Assembly-CSharp (asmdef 없음)</span></div>
+        <div><span class="hm-k">네임스페이스</span><span class="hm-v">전역 (없음)</span></div>
+        <div><span class="hm-k">입력</span><span class="hm-v">New Input System 전용</span></div>
+      </div>
+    </div>
+
+    <!-- ================= 00 ================= -->
+    <section id="s0">
+      <div class="sec-head"><span class="sec-n">00</span><h2>아키텍처 한눈에</h2></div>
+      <p class="sec-note">매 프레임 <code>Update()</code>를 가진 것은 <code>Actor</code> 하나뿐이다. 모든 상태 변화는 ① Actor의 명시적 호출, ② 애니메이션 이벤트(비동기), ③ 다른 Actor의 공격(교차 오브젝트) 셋 중 하나로만 일어나므로 실행 순서 지정이 필요 없다. <code>Locomotion</code>은 아무도 호출하지 않는 그래프의 종점이다.</p>
+
+      <div class="figure">
+        <svg viewBox="0 0 880 470" width="100%" height="auto" role="img" aria-label="컴포넌트 호출 방향 그래프">
+          <defs>
+            <marker id="ah" markerWidth="9" markerHeight="9" refX="7.5" refY="3.2" orient="auto">
+              <path d="M0,0 L7.5,3.2 L0,6.4 z" fill="var(--ink-3)"/>
+            </marker>
+            <marker id="ahA" markerWidth="9" markerHeight="9" refX="7.5" refY="3.2" orient="auto">
+              <path d="M0,0 L7.5,3.2 L0,6.4 z" fill="var(--accent)"/>
+            </marker>
+            <marker id="ahD" markerWidth="9" markerHeight="9" refX="7.5" refY="3.2" orient="auto">
+              <path d="M0,0 L7.5,3.2 L0,6.4 z" fill="var(--k-iface)"/>
+            </marker>
+          </defs>
+
+          <style>
+            .nb{fill:var(--surface-2); stroke:var(--line-strong); stroke-width:1.2; rx:8;}
+            .nb-acc{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.8; rx:8;}
+            .nb-dash{fill:none; stroke:var(--k-iface); stroke-width:1.2; stroke-dasharray:4 3; rx:8;}
+            .nl{font-family:var(--mono); font-size:13px; font-weight:600; fill:var(--ink); text-anchor:middle;}
+            .nl-s{font-family:var(--mono); font-size:10px; fill:var(--ink-3); text-anchor:middle;}
+            .ed{stroke:var(--ink-3); stroke-width:1.3; fill:none; marker-end:url(#ah);}
+            .ed-a{stroke:var(--accent); stroke-width:1.6; fill:none; marker-end:url(#ahA);}
+            .ed-d{stroke:var(--k-iface); stroke-width:1.2; fill:none; stroke-dasharray:4 3; marker-end:url(#ahD);}
+            .el{font-family:var(--mono); font-size:9.5px; fill:var(--ink-3);}
+          </style>
+
+          <!-- nodes -->
+          <rect class="nb" x="40" y="40" width="200" height="52"/>
+          <text class="nl" x="140" y="64">IIntentSource</text>
+          <text class="nl-s" x="140" y="79">PlayerInput / EnemyBrain</text>
+
+          <rect class="nb-acc" x="40" y="170" width="200" height="66"/>
+          <text class="nl" x="140" y="197" style="fill:var(--accent)">Actor</text>
+          <text class="nl-s" x="140" y="213" style="fill:var(--accent)">유일한 Update()</text>
+          <text class="nl-s" x="140" y="226" style="fill:var(--accent)">프레임 순서 고정</text>
+
+          <rect class="nb" x="330" y="150" width="190" height="54"/>
+          <text class="nl" x="425" y="174">Fighter</text>
+          <text class="nl-s" x="425" y="190">공격 · 콤보 · 히트스캔</text>
+
+          <rect class="nb" x="330" y="250" width="230" height="54"/>
+          <text class="nl" x="445" y="272" style="font-size:12px">CharacterStateMachine</text>
+          <text class="nl-s" x="445" y="288">상태 · 애니메이션 · 워치독</text>
+
+          <rect class="nb" x="630" y="250" width="200" height="54"/>
+          <text class="nl" x="730" y="274">Health</text>
+          <text class="nl-s" x="730" y="290">체력 · 피격</text>
+
+          <rect class="nb" x="330" y="370" width="230" height="58"/>
+          <text class="nl" x="445" y="394">Locomotion</text>
+          <text class="nl-s" x="445" y="410">이동 적분 · 종점 (아무도 호출 안 함)</text>
+
+          <rect class="nb-dash" x="630" y="55" width="200" height="62"/>
+          <text class="nl" x="730" y="79" style="fill:var(--k-iface); font-size:12px">AnimationEventRelay</text>
+          <text class="nl-s" x="730" y="95" style="fill:var(--k-iface)">Visual 자식</text>
+          <text class="nl-s" x="730" y="107" style="fill:var(--k-iface)">클립 이벤트 5개</text>
+
+          <!-- edges -->
+          <path class="ed-a" d="M140,92 L140,166"/>
+          <text class="el" x="148" y="132" fill="var(--accent)">GetIntent</text>
+
+          <path class="ed-a" d="M240,192 L326,177"/>
+          <text class="el" x="252" y="176">TryAttack</text>
+
+          <path class="ed-a" d="M240,218 L326,262"/>
+          <text class="el" x="250" y="248">Enter* / Evaluate</text>
+
+          <path class="ed-a" d="M140,236 L140,399 L326,399"/>
+          <text class="el" x="150" y="330">SetMoveInput · Tick</text>
+
+          <path class="ed" d="M425,204 L425,246"/>
+          <text class="el" x="432" y="228">EnterAttack</text>
+
+          <path class="ed" d="M520,177 L590,177 L590,388 L564,388"/>
+          <text class="el" x="597" y="290">StopGroundSlide</text>
+
+          <path class="ed-d" d="M470,304 L470,366"/>
+          <text class="el" x="478" y="340" fill="var(--k-iface)">읽기 전용</text>
+
+          <path class="ed" d="M626,272 L564,272"/>
+          <text class="el" x="568" y="264">Interrupt</text>
+
+          <path class="ed" d="M680,304 L680,414 L564,414"/>
+          <text class="el" x="602" y="430">ApplyKnockback</text>
+
+          <path class="ed" d="M660,250 L660,222 L470,222 L470,206" transform="translate(0,0)" style="marker-end:url(#ah)"/>
+          <text class="el" x="500" y="217">CancelAttack →</text>
+
+          <path class="ed-d" d="M700,117 C660,140 560,140 524,164"/>
+          <path class="ed-d" d="M760,117 C760,190 620,206 566,258"/>
+
+          <path class="ed-d" d="M860,250 C860,210 800,206 762,246" style="marker-end:url(#ahD)"/>
+          <text class="el" x="770" y="212" fill="var(--k-iface)">다른 Actor의 공격</text>
+        </svg>
+        <p class="figcap">실선 = 동기 호출 · 앰버 = <code style="background:none;border:none;padding:0">Actor.Update()</code>가 여는 경로 · 점선(틸) = 비동기 진입(애니메이션 이벤트 / 교차 오브젝트)</p>
+      </div>
+
+      <h3>Actor.Update() 프레임 순서</h3>
+      <p class="sec-note"><b>방향은 공격 전, 이동은 공격 후</b> 잠금을 계산한다 — “→ + X 동시 입력 시 오른쪽으로 공격”이 이 순서에서 나온다.</p>
+      <div class="tw"><table>
+        <thead><tr><th style="width:52px">단계</th><th class="mono">호출</th><th>이유</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">1</td><td class="mono">intentSource.GetIntent(dt)</td><td>이번 프레임 의도 확보. 없으면 <code>CharacterIntent.None</code> (훈련 더미)</td></tr>
+          <tr><td class="mono">2</td><td class="mono">locomotion.SetFacing(...)</td><td>공격 <b>전</b> 잠금 기준으로 방향 확정</td></tr>
+          <tr><td class="mono">3</td><td class="mono">fighter.TryAttack(...)</td><td>방금 정한 방향으로 공격이 나감</td></tr>
+          <tr><td class="mono">4</td><td class="mono">PrepareJump + EnterJumpStart</td><td>지상 &amp; <code>CanAct</code>일 때만</td></tr>
+          <tr><td class="mono">5</td><td class="mono">locomotion.SetMoveInput(...)</td><td>공격·점프를 <b>반영한 뒤</b> 잠금 재계산</td></tr>
+          <tr><td class="mono">6</td><td class="mono">(스냅샷)</td><td><code>LaunchedByJump</code> / <code>IsKnockedBackAirborne</code> — 착지 엣지 감지용</td></tr>
+          <tr><td class="mono">7</td><td class="mono">locomotion.Tick(dt)</td><td>물리 적분. 여기서 착지하면 위 두 값이 꺼짐</td></tr>
+          <tr><td class="mono">8</td><td class="mono">EnterJumpLand / EnterLanded</td><td>스냅샷과 비교해 착지 순간에만 1회</td></tr>
+          <tr><td class="mono">9</td><td class="mono">fighter.Tick(dt)</td><td>공격 지속시간 / 콤보 진행</td></tr>
+          <tr><td class="mono">10</td><td class="mono">stateMachine.Evaluate()</td><td>워치독 → 상태 재판정 → 스프라이트 반전</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>컴포넌트 간 호출 규칙 (전체 엣지)</h3>
+      <div class="tw"><table>
+        <thead><tr><th>호출자</th><th>대상</th><th style="width:80px">방향</th><th>목적</th></tr></thead>
+        <tbody>
+          <tr><td>Actor</td><td class="mono">IIntentSource</td><td>호출</td><td>이번 프레임 의도</td></tr>
+          <tr><td>Actor</td><td class="mono">Fighter</td><td>호출</td><td><code>TryAttack</code>, <code>Tick</code></td></tr>
+          <tr><td>Actor</td><td class="mono">Locomotion</td><td>호출</td><td><code>PrepareJump</code>, <code>SetFacing</code>, <code>SetMoveInput</code>, <code>Tick</code></td></tr>
+          <tr><td>Actor</td><td class="mono">CharacterStateMachine</td><td>호출/읽기</td><td><code>EnterJumpStart/JumpLand/Landed</code>, <code>CanAct</code>, <code>IsMovementLocked</code>, <code>Evaluate</code></td></tr>
+          <tr><td>Fighter</td><td class="mono">Locomotion</td><td>호출</td><td><code>StopGroundSlide</code>, <code>ApplySelfMovement</code>, <code>FacingDir</code> 읽기</td></tr>
+          <tr><td>Fighter</td><td class="mono">CharacterStateMachine</td><td>호출/읽기</td><td><code>EnterAttack</code> / <code>ExitAttack</code>, <code>CanAct</code> 읽기</td></tr>
+          <tr><td>Health</td><td class="mono">Locomotion</td><td>호출</td><td><code>ApplyKnockback</code></td></tr>
+          <tr><td>Health</td><td class="mono">CharacterStateMachine</td><td>호출</td><td><code>Interrupt</code></td></tr>
+          <tr><td>Health</td><td class="mono">Fighter</td><td>호출</td><td><code>CancelAttack</code></td></tr>
+          <tr><td>CharacterStateMachine</td><td class="mono">Locomotion</td><td>읽기</td><td><code>Evaluate()</code>용 물리 상태 <b>+ 점프 발사 시 <code>Jump()</code> 호출 1건(유일한 예외)</b></td></tr>
+          <tr><td>AnimationEventRelay</td><td class="mono">Fighter / StateMachine</td><td>호출</td><td>클립 이벤트 5개 중계</td></tr>
+          <tr><td>다른 Actor의 Fighter</td><td class="mono">Health</td><td>호출</td><td><code>OnHit(HitData)</code> — <code>IHittable</code> 경유</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ================= 01 Actor ================= -->
+    <section id="s1">
+      <div class="sec-head"><span class="sec-n">01</span><h2>Actor</h2></div>
+      <div class="comp">
+        <div class="comp-head">
+          <span class="comp-name">Actor</span>
+          <span class="comp-path">Assets/Script/Character/Actor.cs</span>
+          <span class="comp-tag req">RequireComponent · Locomotion, Fighter, CharacterStateMachine, Health</span>
+        </div>
+        <p class="comp-desc">캐릭터 “몸”을 조율. <b>몸 컴포넌트 중 유일하게 <code>Update()</code>를 가짐.</b> 스크립트 하나만 붙이면 나머지 4개가 자동 동반된다.</p>
+        <div class="comp-body">
+          <div class="member" data-k="priv uni">
+            <div class="m-sig"><span class="sym priv">·</span><span class="m-name">Awake</span><span class="badge b-k">(k)</span></div>
+            <div class="m-caller">Unity</div>
+            <div class="m-desc"><code>GetComponent</code>로 locomotion / fighter / stateMachine / intentSource 캐싱. intentSource 없어도 정상 동작(훈련 더미).</div>
+          </div>
+          <div class="member" data-k="priv uni">
+            <div class="m-sig"><span class="sym priv">·</span><span class="m-name">Update</span><span class="badge b-k">(k)</span></div>
+            <div class="m-caller">Unity 매 프레임</div>
+            <div class="m-desc">위 00번의 10단계 순서를 고정 실행. 순서를 바꾸면 “공격 방향이 한 프레임 늦음” 등의 버그가 즉시 재발한다.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 02 Locomotion ================= -->
+    <section id="s2">
+      <div class="sec-head"><span class="sec-n">02</span><h2>Locomotion</h2></div>
+      <p class="sec-note">Rigidbody 없이 위치/속도를 직접 적분. 중력은 <code>GlobalPhysicsData.gravity × gravityScale</code>.</p>
+
+      <h3>enum AirborneOrigin</h3>
+      <div class="tw"><table>
+        <thead><tr><th style="width:130px" class="mono">값</th><th>의미</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">None</td><td>지상이거나, 이유 없이 그냥 떨어지는 중(스폰 위치가 바닥보다 살짝 위 등)</td></tr>
+          <tr><td class="mono">Jump</td><td><code>Jump()</code>로 뜬 것. 바운스 없이 착지하고, 착지하면 착지 경직으로</td></tr>
+          <tr><td class="mono">Knockback</td><td><code>ApplyKnockback()</code>으로 띄워진 것. 바닥/벽에서 바운스하고, 착지하면 쓰러짐</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note">공중 진입점이 <code>Jump()</code> / <code>ApplyKnockback()</code> 둘뿐이라 출처가 항상 셋 중 하나로 결정된다. 예전엔 bool 2개였는데 <code>(true, true)</code>라는 무효 조합이 표현 가능했다 — enum으로 합쳐 소멸.</div>
+
+      <div class="comp">
+        <div class="comp-head">
+          <span class="comp-name">Locomotion</span>
+          <span class="comp-path">Assets/Script/Character/Locomotion.cs</span>
+          <span class="comp-tag req">RequireComponent · Collider</span>
+        </div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">movementStatData</span><span class="badge b-so">[SO]</span></div><div class="m-caller">인스펙터</div><div class="m-desc">Awake에서 스탯 복사. 없으면 코드 기본값 + 경고</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">use8DirectionSnap</span><span class="m-args"> : bool</span></div><div class="m-caller">인스펙터</div><div class="m-desc">켜면 45도 스냅(플레이어), 끄면 입력 방향 그대로(AI)</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">MoveSpeedMultiplier</span><span class="m-args"> : float</span></div><div class="m-caller">Actor 매 프레임</div><div class="m-desc"><code>fighter.MoveSpeedMultiplier</code>를 그대로 받아 이동 속도에 곱함</div></div>
+
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">Velocity</span><span class="m-args"> : Vector3</span></div><div class="m-caller">—</div><div class="m-desc">현재 속도</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">IsGrounded</span><span class="m-args"> : bool</span></div><div class="m-caller">Actor · StateMachine · Health</div><div class="m-desc">지상 여부. Health가 지상/공중 넉백을 고를 때도 사용</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">IsGroundSliding</span><span class="m-args"> : bool</span></div><div class="m-caller">StateMachine</div><div class="m-desc">넉백 히트슬라이드 중 → <code>Stun</code> 상태 판정</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">IsKnockedBackAirborne</span><span class="m-args"> : bool</span></div><div class="m-caller">Actor(엣지) · StateMachine</div><div class="m-desc"><code>origin == Knockback</code> → <code>Airborne</code> 상태 판정</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">LaunchedByJump</span><span class="m-args"> : bool</span></div><div class="m-caller">Actor (착지 경직 엣지)</div><div class="m-desc"><code>origin == Jump</code>. 이걸 안 보고 “공중이었다”만 보면 첫 낙하까지 점프 착지로 오인한다</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">HorizontalSpeed</span><span class="m-args"> : float</span></div><div class="m-caller">StateMachine</div><div class="m-desc">수평 속력. <code>Move</code> / <code>Idle</code> 판정 기준</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">FacingRight</span><span class="m-args"> : bool</span></div><div class="m-caller">StateMachine</div><div class="m-desc">스프라이트 <code>flipX</code> 동기화용</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">FacingDir</span><span class="m-args"> : Vector3</span></div><div class="m-caller">Fighter · StateMachine</div><div class="m-desc"><code>Vector3.right</code> 또는 <code>left</code>. 히트스캔 방향의 유일한 기준</div></div>
+
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Awake</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc">SO 값 복사 + <code>Collider.bounds.extents</code>로 boundaryRadius / groundOffset 계산</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">SetMoveInput</span><span class="m-args">(Vector2 rawInput)</span></div><div class="m-caller">Actor 매 프레임</div><div class="m-desc">수평 속도 갱신. <b>공중이거나 슬라이드 중이면 무시</b>(공중 이동 제어 없음). 8방향 스냅 또는 정규화</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">SetFacing</span><span class="m-args">(Vector3 direction)</span></div><div class="m-caller">Actor 매 프레임</div><div class="m-desc">x 성분만 보고 좌우 결정. <b>지상에 있을 때만.</b> 0 벡터면 무시 — 잠금 시 Actor가 0을 넘긴다</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">SnapTo8Directions</span><span class="m-args">(Vector3) → Vector3 &nbsp;static</span></div><div class="m-caller">SetMoveInput 내부</div><div class="m-desc">임의 방향 → 45도 단위 8방향 스냅</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">PrepareJump</span><span class="m-args">(float horizontalInputX)</span></div><div class="m-caller">Actor (점프 의도 순간)</div><div class="m-desc">아직 안 뜬다. 이 순간의 좌우 속도만 기억 — 준비 동작 중엔 이동이 잠겨 속도가 지워지므로</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">Jump</span><span class="m-args">()</span></div><div class="m-caller"><b>StateMachine</b>.OnJumpLaunchFrame</div><div class="m-desc">실제 발사. <code>velocity.y = jumpForce</code>, <code>origin = Jump</code>. 지상 아니면 무시. <b>StateMachine → Locomotion 유일한 쓰기 호출</b></div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">ApplyKnockback</span><span class="m-args">(Vector3 knockbackVelocity, float slideDeceleration)</span></div><div class="m-caller">Health.OnHit · ImpulseAttackData</div><div class="m-desc">수직 속도 &gt; 임계값이면 공중으로(<code>origin=Knockback</code>), 이하이고 지상이면 그라운드 슬라이드. 어느 쪽이든 진행 중이던 점프를 무효화</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">StopGroundSlide</span><span class="m-args">()</span></div><div class="m-caller">Fighter (StartAttack / AdvanceOrEnd / CancelAttack)</div><div class="m-desc">슬라이드 즉시 종료 + 수평 속도 0. 슬라이드 중 아니면 no-op이라 피격 슬라이드를 실수로 끊을 걱정 없음</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">Tick</span><span class="m-args">(float deltaTime)</span></div><div class="m-caller">Actor 매 프레임</div><div class="m-desc">슬라이드 감속 → 중력 → 위치 적분 → 바닥 충돌/바운스 → 맵 경계 클램프/바운스. <code>MapBounds.Instance</code>와 <code>GlobalPhysicsData.Instance</code>를 직접 읽음</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 03 Fighter ================= -->
+    <section id="s3">
+      <div class="sec-head"><span class="sec-n">03</span><h2>Fighter</h2></div>
+      <p class="sec-note">입력 시점(<code>TryAttack</code>)과 판정 시점(<code>OnAttackHitFrame</code>)이 분리돼 있다 — 판정은 공격 클립의 Animation Event가 부르는 타이밍에 그 시점의 위치/방향으로 수행된다.</p>
+
+      <div class="comp">
+        <div class="comp-head">
+          <span class="comp-name">Fighter</span>
+          <span class="comp-path">Assets/Script/Character/Fighter.cs</span>
+          <span class="comp-tag">implements IAttackRangeDebugInfo</span>
+          <span class="comp-tag req">RequireComponent · Locomotion, CharacterStateMachine</span>
+        </div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">targetLayer</span><span class="m-args"> : LayerMask</span></div><div class="m-caller">인스펙터</div><div class="m-desc">때릴 대상 레이어. 플레이어 → Enemy, 적 → Player</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnAttackHitFrameFired</span><span class="badge b-ev">event Action</span></div><div class="m-caller">AttackRangeGizmo가 구독</div><div class="m-desc">타격 판정이 실제로 일어난 순간 발생</div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">warned</span><span class="m-args"> : static HashSet&lt;AttackData&gt;</span></div><div class="m-caller">WarnIfMisconfigured</div><div class="m-desc">에셋당 경고 1회. 없으면 콤보 단계마다 Console을 뒤덮음</div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">hitThisScan</span><span class="m-args"> : HashSet&lt;IHittable&gt;</span></div><div class="m-caller">PerformHitScan</div><div class="m-desc">한 스캔에서 대상 중복 타격 차단. <b>콜라이더 여러 개인 적을 때릴 때 데미지·넉백이 2번 적용되던 버그의 가드</b></div></div>
+
+          <div class="member" data-k="pub ifc"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">IsAttacking</span><span class="m-args"> : bool</span></div><div class="m-caller">Fighter 내부 · Gizmo</div><div class="m-desc"><code>stateMachine.CurrentState == Attack</code>. 별도 플래그를 두지 않는다 — 상태의 권한은 StateMachine에 있음</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">MovementAllowed</span><span class="m-args"> : bool</span></div><div class="m-caller">Actor (이동 잠금)</div><div class="m-desc">공격 중이 아니거나, 그 공격이 이동을 허용하면 true</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">MoveSpeedMultiplier</span><span class="m-args"> : float</span></div><div class="m-caller">Actor</div><div class="m-desc">공격 중이면 그 공격의 배율, 아니면 1</div></div>
+          <div class="member" data-k="pub ifc"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">FacingDir</span><span class="m-args"> : Vector3</span></div><div class="m-caller">Gizmo</div><div class="m-desc"><code>locomotion.FacingDir</code> 위임. null이면 <code>Vector3.right</code> (에디트 모드 가드)</div></div>
+          <div class="member" data-k="pub ifc"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">AttackRange</span> / <span class="m-name">AttackRadius</span></div><div class="m-caller">Gizmo · PerformHitScan</div><div class="m-desc">현재 공격 값. 없으면 0 → 에디트 모드에선 기즈모가 안 보임</div></div>
+
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Awake</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc">locomotion / stateMachine 캐싱</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">TryAttack</span><span class="m-args">(AttackData requested)</span></div><div class="m-caller">Actor</div><div class="m-desc"><b>3갈래</b> — ① 공격 중 아님: <code>CanAct</code> + 쿨타임 통과 시 <code>StartAttack</code> ② <b>다른</b> 공격: <code>canCancelOtherAttacks</code> &amp;&amp; <code>hasFiredHitFrame</code>일 때만 즉시 캔슬 ③ <b>같은</b> 공격: <code>nextAttack</code> 있으면 <code>comboBuffered = true</code></div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">Tick</span><span class="m-args">(float deltaTime)</span></div><div class="m-caller">Actor 매 프레임</div><div class="m-desc">공격 중이면 <code>attackTimer</code> 감소, 0 이하 시 <code>AdvanceOrEnd</code></div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnAttackHitFrame</span><span class="m-args">()</span></div><div class="m-caller"><b>AnimationEventRelay</b></div><div class="m-desc"><code>PerformHitScan</code> → <code>hasFiredHitFrame = true</code>(이 시점부터 캔슬 가능) → 이벤트 발생</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">CancelAttack</span><span class="m-args">()</span></div><div class="m-caller">Health.OnHit</div><div class="m-desc">타이머 · 콤보 예약 · 스타터 · 히트프레임 정리 + <code>StopGroundSlide</code>. <b>상태 전이는 하지 않음</b> — 그건 <code>StateMachine.Interrupt</code>의 일</div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">StartAttack</span><span class="m-args">(AttackData data)</span></div><div class="m-caller">TryAttack · AdvanceOrEnd</div><div class="m-desc"><code>StopGroundSlide</code> → 타이머/쿨타임 설정 → <code>WarnIfMisconfigured</code> → <code>stateMachine.EnterAttack(clip)</code> → <code>data.ApplySelfMovement</code></div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">AdvanceOrEnd</span><span class="m-args">()</span></div><div class="m-caller">Tick (타이머 소진)</div><div class="m-desc">버퍼링 &amp;&amp; <code>nextAttack</code> 있으면 다음 단계 <code>StartAttack</code>, 아니면 정리 + <code>stateMachine.ExitAttack</code></div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">PerformHitScan</span><span class="m-args">()</span></div><div class="m-caller">OnAttackHitFrame</div><div class="m-desc"><code>Physics.OverlapSphere(center, radius, targetLayer)</code> → 각 <code>col.GetComponentInParent&lt;IHittable&gt;()</code>(중복 제거) → <code>HitData</code> 만들어 <code>OnHit</code>. 지상/공중 넉백을 <b>둘 다</b> 실어 보냄</div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">WarnIfMisconfigured</span><span class="m-args">(AttackData) &nbsp;static</span></div><div class="m-caller">StartAttack</div><div class="m-desc">클립/지속시간 없음, <code>OnAttackHitFrame</code> 이벤트 없음을 에셋당 1회 경고</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 04 Health ================= -->
+    <section id="s4">
+      <div class="sec-head"><span class="sec-n">04</span><h2>Health</h2></div>
+      <div class="comp">
+        <div class="comp-head">
+          <span class="comp-name">Health</span>
+          <span class="comp-path">Assets/Script/Character/Health.cs</span>
+          <span class="comp-tag">implements IHittable</span>
+          <span class="comp-tag req">RequireComponent · Locomotion, Fighter, CharacterStateMachine</span>
+        </div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">characterStatData</span><span class="badge b-so">[SO]</span></div><div class="m-caller">인스펙터</div><div class="m-desc"><code>maxHealth</code> 소스. 없으면 100 + 경고</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">CurrentHealth</span><span class="m-args"> : int</span></div><div class="m-caller">HealthDebugDisplay</div><div class="m-desc">현재 체력</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">MaxHealth</span><span class="m-args"> : int</span></div><div class="m-caller">HealthDebugDisplay</div><div class="m-desc"><code>characterStatData.maxHealth</code> 또는 100</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnDeath</span><span class="badge b-ev">event Action</span></div><div class="m-caller">(스켈레톤 범위엔 구독자 없음)</div><div class="m-desc">체력 0 이하 순간 1회. 소멸/연출은 이걸 구독하는 별도 컴포넌트의 일</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Awake</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc">시블링 캐싱 + <code>CurrentHealth = MaxHealth</code></div></div>
+          <div class="member" data-k="pub ifc"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnHit</span><span class="m-args">(HitData hit)</span> <span class="sym ifc">◆</span><span class="m-args">IHittable</span></div><div class="m-caller"><b>공격자의</b> Fighter.PerformHitScan</div><div class="m-desc"><code>dead</code>면 무시 → 데미지 → <code>fighter.CancelAttack()</code> → <code>hit.ResolveKnockbackVelocity(!IsGrounded)</code> → <code>locomotion.ApplyKnockback</code> → <code>stateMachine.Interrupt()</code> → 0 이하 시 <code>OnDeath</code></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 05 StateMachine ================= -->
+    <section id="s5">
+      <div class="sec-head"><span class="sec-n">05</span><h2>CharacterStateMachine</h2></div>
+      <p class="sec-note">상태 enum <b>하나</b>로 논리 게이팅(<code>CanAct</code> / <code>IsMovementLocked</code>) + 애니메이션(CrossFade, 스프라이트 반전) + 워치독을 동시에 굴린다. 예전엔 <code>ActionPhase</code>(논리) + <code>CharacterState</code>(표현) 두 개를 두고 매 프레임 “phase → 같은 이름 state”로 옮겨적었는데, 그 번역 사다리를 없앤 것이 이 통합의 핵심이다.</p>
+
+      <h3>enum CharacterState</h3>
+      <div class="tw"><table>
+        <thead><tr><th style="width:120px" class="mono">값</th><th style="width:110px">성격</th><th>진입</th><th>탈출</th></tr></thead>
+        <tbody>
+          <tr><td class="mono"><span class="dot d-phys"></span>Idle</td><td>물리 파생</td><td>기본</td><td>자동</td></tr>
+          <tr><td class="mono"><span class="dot d-phys"></span>Move</td><td>물리 파생</td><td><code>HorizontalSpeed &gt; 0.1</code></td><td>자동</td></tr>
+          <tr><td class="mono"><span class="dot d-phys"></span>InAir</td><td>물리 파생</td><td><code>!IsGrounded</code></td><td>자동</td></tr>
+          <tr><td class="mono"><span class="dot d-phys"></span>Stun</td><td>물리 파생</td><td><code>IsGroundSliding</code> (가벼운 피격)</td><td>마찰로 슬라이드 종료</td></tr>
+          <tr><td class="mono"><span class="dot d-phys"></span>Airborne</td><td>물리 파생</td><td><code>IsKnockedBackAirborne</code> (강한 피격)</td><td>착지</td></tr>
+          <tr><td class="mono"><span class="dot d-sticky"></span>JumpStart</td><td><b>고정</b> · 워치독</td><td><code>EnterJumpStart</code></td><td><code>OnJumpLaunchFrame</code></td></tr>
+          <tr><td class="mono"><span class="dot d-sticky"></span>JumpLand</td><td><b>고정</b> · 워치독</td><td><code>EnterJumpLand</code> (착지 엣지)</td><td><code>OnJumpLandEndFrame</code></td></tr>
+          <tr><td class="mono"><span class="dot d-sticky"></span>Attack</td><td><b>고정</b> · 자체 타이머</td><td><code>EnterAttack</code></td><td><code>ExitAttack</code> — <b>워치독 제외</b></td></tr>
+          <tr><td class="mono"><span class="dot d-sticky"></span>Landed</td><td><b>고정</b> · 워치독</td><td><code>EnterLanded</code> (넉백 착지 엣지)</td><td><code>OnKnockdownGetUpStartFrame</code></td></tr>
+          <tr><td class="mono"><span class="dot d-sticky"></span>GetUp</td><td><b>고정</b> · 워치독</td><td>Landed의 이벤트</td><td><code>OnKnockdownGetUpEndFrame</code></td></tr>
+        </tbody>
+      </table></div>
+      <div class="note"><b>끊김 방지 규칙</b> — <code>Health.OnHit</code>은 지금이 고정 상태 5개 중 무엇이든 상관없이 <code>Interrupt()</code> 한 번으로 되돌린다. <b>어떤 상태였는지 분기하지 않는 것</b>이 핵심이라, 나중에 고정 상태를 추가해도 “피격 시 이동 영구 잠김”이 누락으로 재발할 수 없다. 그리고 <code>Evaluate()</code>는 고정 상태면 조기 반환하므로, Impulse 돌진 슬라이드가 <code>Stun</code>으로 오표시되던 옛 버그도 구조적으로 불가능하다.</div>
+
+      <div class="comp">
+        <div class="comp-head">
+          <span class="comp-name">CharacterStateMachine</span>
+          <span class="comp-path">Assets/Script/Character/CharacterStateMachine.cs</span>
+          <span class="comp-tag req">RequireComponent · Locomotion</span>
+        </div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">transitionDuration</span><span class="m-args"> : float = 0</span></div><div class="m-caller">인스펙터</div><div class="m-desc">애니메이션 블렌드 시간. <b>스프라이트는 프레임 보간 불가라 0</b>. &gt;0이면 <code>CrossFadeInFixedTime</code>, 0이면 <code>Animator.Play</code> 하드컷</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">actionPhaseTimeout</span><span class="m-args"> : float = 2</span></div><div class="m-caller">인스펙터</div><div class="m-desc">워치독: 고정 상태가 이 시간 넘게 안 끝나면 강제 해제 + 경고. <b>정상 플레이에선 절대 발동하지 않아야 함</b></div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">MoveEpsilon</span><span class="m-args"> : const 0.1f</span></div><div class="m-caller">DerivePhysicsState</div><div class="m-desc">이 속력 이상이면 <code>Move</code></div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">warnedMissing</span><span class="m-args"> : HashSet&lt;string&gt;</span></div><div class="m-caller">CrossFade</div><div class="m-desc">없는 Animator State 경고 1회</div></div>
+
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">CurrentState</span><span class="m-args"> : CharacterState</span></div><div class="m-caller">어디서나</div><div class="m-desc">현재 상태 (get; private set)</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">CanAct</span><span class="m-args"> : bool</span></div><div class="m-caller">Actor(점프 가드) · Fighter(새 콤보 가드)</div><div class="m-desc">고정 상태도 <code>Stun</code>도 <code>Airborne</code>도 아님</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">IsMovementLocked</span><span class="m-args"> : bool</span></div><div class="m-caller">Actor</div><div class="m-desc">JumpStart / JumpLand / Landed / GetUp / Stun / Airborne. <b><code>Attack</code>은 제외</b> — 공격이 이동을 막는지는 Fighter가 판단</div></div>
+
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">EnterAttack</span><span class="m-args">(AnimationClip clip)</span></div><div class="m-caller">Fighter.StartAttack</div><div class="m-desc">상태 <code>Attack</code> + <b>클립 이름</b>으로 CrossFade — 콤보 단계마다 클립이 다르므로</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">ExitAttack</span><span class="m-args">()</span></div><div class="m-caller">Fighter.AdvanceOrEnd</div><div class="m-desc">지금 Attack이면 물리 파생 상태로</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">EnterJumpStart</span><span class="m-args">()</span></div><div class="m-caller">Actor (점프 의도)</div><div class="m-desc">상태 <code>JumpStart</code>. 아직 뜨지 않음</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">EnterJumpLand</span><span class="m-args">()</span></div><div class="m-caller">Actor (점프 착지 엣지)</div><div class="m-desc">상태 <code>JumpLand</code>. 공중 공격 중 착지면 Actor가 호출하지 않음</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">EnterLanded</span><span class="m-args">()</span></div><div class="m-caller">Actor (넉백 착지 엣지)</div><div class="m-desc">상태 <code>Landed</code>. 무엇을 하고 있었든 무조건</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">Interrupt</span><span class="m-args">()</span></div><div class="m-caller"><b>Health.OnHit</b></div><div class="m-desc">어떤 고정 상태든 <b>무조건</b> 물리 파생 상태로. 분기 없음</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnJumpLaunchFrame</span><span class="m-args">()</span></div><div class="m-caller">AnimationEventRelay</div><div class="m-desc"><code>JumpStart</code>일 때만: <code>locomotion.Jump()</code> + 물리 파생 상태로</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnJumpLandEndFrame</span><span class="m-args">()</span></div><div class="m-caller">AnimationEventRelay</div><div class="m-desc"><code>JumpLand</code>일 때만: 착지 경직 해제</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnKnockdownGetUpStartFrame</span><span class="m-args">()</span></div><div class="m-caller">AnimationEventRelay</div><div class="m-desc"><code>Landed</code>일 때만: <code>GetUp</code>으로</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnKnockdownGetUpEndFrame</span><span class="m-args">()</span></div><div class="m-caller">AnimationEventRelay</div><div class="m-desc"><code>GetUp</code>일 때만: 기상 완료</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">Evaluate</span><span class="m-args">()</span></div><div class="m-caller"><b>Actor 매 프레임 끝</b></div><div class="m-desc"><code>TickWatchdog</code> → 고정 상태 아니면 <code>SetState(DerivePhysicsState())</code> → 스프라이트 <code>flipX</code> 동기화</div></div>
+
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Awake</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc">locomotion + <code>GetComponentInChildren&lt;Animator&gt;</code> + <code>&lt;SpriteRenderer&gt;</code></div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">DerivePhysicsState</span><span class="m-args">() → CharacterState</span></div><div class="m-caller">Evaluate · Enter*/Exit*</div><div class="m-desc">우선순위 <code>Airborne &gt; Stun &gt; InAir &gt; Move &gt; Idle</code></div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">SetState</span><span class="m-args">(CharacterState next)</span></div><div class="m-caller">모든 진입점</div><div class="m-desc">같으면 no-op. 아니면 갱신 + <code>stickyElapsed</code> 리셋 + (Attack 아니면) <code>CrossFade(이름)</code></div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">CrossFade</span><span class="m-args">(string stateName)</span></div><div class="m-caller">SetState · EnterAttack</div><div class="m-desc"><code>Animator.HasState</code> 확인(없으면 경고 1회) → 블렌드 &gt;0이면 <code>CrossFadeInFixedTime</code>, 아니면 <code>Animator.Play(hash, 0, 0f)</code></div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">TickWatchdog</span><span class="m-args">()</span></div><div class="m-caller">Evaluate</div><div class="m-desc">고정 상태(Attack 제외)에 머문 시간 누적, 타임아웃 초과 시 경고 + 강제 해제. <code>Landed</code>면 <code>GetUp</code>으로 보냄</div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">ExpectedEvent</span><span class="m-args">(CharacterState) → string &nbsp;static</span></div><div class="m-caller">TickWatchdog</div><div class="m-desc">경고에 “어떤 이벤트를 기다렸는지” 표시 — 원인을 바로 짚어주는 부분</div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">IsSticky</span><span class="m-args">(CharacterState) → bool &nbsp;static</span></div><div class="m-caller">CanAct · Evaluate · TickWatchdog</div><div class="m-desc">JumpStart / JumpLand / Attack / Landed / GetUp 여부</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 06 Relay ================= -->
+    <section id="s6">
+      <div class="sec-head"><span class="sec-n">06</span><h2>AnimationEventRelay</h2></div>
+      <div class="note"><b>반드시 Visual 자식(Animator가 붙은 오브젝트)에 붙일 것.</b> 애니메이션 이벤트는 Animator가 있는 GameObject로만 전달된다. 루트에 붙이면 “has no receiver!” 경고가 뜨고 해당 동작이 워치독으로만 풀린다.</div>
+      <div class="comp">
+        <div class="comp-head">
+          <span class="comp-name">AnimationEventRelay</span>
+          <span class="comp-path">Assets/Script/Character/AnimationEventRelay.cs</span>
+          <span class="comp-tag">Visual 자식</span>
+        </div>
+        <div class="comp-body">
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Awake</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc"><code>GetComponentInParent</code>로 Fighter / CharacterStateMachine (없으면 경고)</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnAttackHitFrame</span><span class="m-args">()</span></div><div class="m-caller">공격 클립 Animation Event</div><div class="m-desc">→ <code>fighter.OnAttackHitFrame()</code></div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnJumpLaunchFrame</span><span class="m-args">()</span></div><div class="m-caller">JumpStart 클립</div><div class="m-desc">→ <code>stateMachine.OnJumpLaunchFrame()</code></div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnJumpLandEndFrame</span><span class="m-args">()</span></div><div class="m-caller">JumpLand 클립</div><div class="m-desc">→ <code>stateMachine.OnJumpLandEndFrame()</code></div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnKnockdownGetUpStartFrame</span><span class="m-args">()</span></div><div class="m-caller">Landed 클립</div><div class="m-desc">→ <code>stateMachine.OnKnockdownGetUpStartFrame()</code></div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">OnKnockdownGetUpEndFrame</span><span class="m-args">()</span></div><div class="m-caller">GetUp 클립</div><div class="m-desc">→ <code>stateMachine.OnKnockdownGetUpEndFrame()</code></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 07 Intent ================= -->
+    <section id="s7">
+      <div class="sec-head"><span class="sec-n">07</span><h2>의도(Intent) 계층</h2></div>
+      <p class="sec-note">“무엇을 할지”를 정하는 주체와 “몸”을 잇는 이음매. 나중에 <code>EnemyBrain</code>을 붙일 때 <code>Actor</code>는 한 글자도 바뀌지 않는다.</p>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">CharacterIntent</span><span class="comp-path">Assets/Script/Character/CharacterIntent.cs</span><span class="comp-tag">struct</span></div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">MoveInput</span><span class="m-args"> : Vector2</span></div><div class="m-caller">Actor</div><div class="m-desc">이동 입력 (-1 ~ 1). Locomotion이 필요에 따라 8방향 스냅</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">FacingDirection</span><span class="m-args"> : Vector3</span></div><div class="m-caller">Actor</div><div class="m-desc">바라볼 방향. x만 사용, 0이면 유지. 이동 방향과 다를 수 있어 분리(뒷걸음질 등)</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">AttackToStart</span><span class="m-args"> : AttackData</span></div><div class="m-caller">Actor</div><div class="m-desc">null이 아니면 “이 공격 시작”. <b><code>WantsAttack</code> bool은 없다</b> — 중복 신호 제거</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">WantsJump</span><span class="m-args"> : bool</span></div><div class="m-caller">Actor</div><div class="m-desc">이번 프레임 점프</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">None</span><span class="m-args"> : static prop</span></div><div class="m-caller">Actor (소스 없을 때)</div><div class="m-desc"><code>default</code>. 아무것도 하지 않는 의도</div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">IIntentSource</span><span class="comp-path">Assets/Script/Character/IIntentSource.cs</span><span class="comp-tag">interface</span></div>
+        <div class="comp-body">
+          <div class="member" data-k="ifc"><div class="m-sig"><span class="sym ifc">◆</span><span class="m-name">GetIntent</span><span class="m-args">(float deltaTime) → CharacterIntent</span></div><div class="m-caller">Actor 매 프레임</div><div class="m-desc">구현체: <code>PlayerInput</code> (나중에 <code>EnemyBrain</code>). <b>소유자를 파라미터로 넘기지 않는다</b> — 필요하면 구현체가 스스로 <code>GetComponent</code></div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head">
+          <span class="comp-name">PlayerInput</span>
+          <span class="comp-path">Assets/Script/Player/PlayerInput.cs</span>
+          <span class="comp-tag">implements IIntentSource</span>
+        </div>
+        <p class="comp-desc">New Input System을 <b>코드로 직접</b> 바인딩(별도 <code>.inputactions</code> 에셋 안 씀). 조작: WASD·방향키 이동 / X 공격1 / Z 공격2(선택) / C 점프</p>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">attack1Data</span> / <span class="m-name">attack2Data</span></div><div class="m-caller">인스펙터</div><div class="m-desc">X / Z에 대응. attack2 비우면 Z는 무시(에러 없음)</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Awake</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc"><code>new InputAction(...)</code> 4개 생성 + 바인딩</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">OnEnable</span> / <span class="m-name">OnDisable</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc"><code>performed</code> 구독·해제 + <code>Enable()</code> / <code>Disable()</code></div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">OnDestroy</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc"><code>InputAction.Dispose()</code></div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">OnAttack</span> / <span class="m-name">OnAttack2</span> / <span class="m-name">OnJump</span><span class="m-args">(CallbackContext)</span></div><div class="m-caller">입력 콜백</div><div class="m-desc"><code>pendingAttack</code> / <code>jumpRequested</code> 플래그만 세움. 실제 처리는 같은 프레임의 <code>GetIntent</code></div></div>
+          <div class="member" data-k="pub ifc"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">GetIntent</span><span class="m-args">(float) → CharacterIntent</span> <span class="sym ifc">◆</span></div><div class="m-caller">Actor 매 프레임</div><div class="m-desc"><code>moveAction.ReadValue&lt;Vector2&gt;()</code> + pending 소비 → CharacterIntent. 한 프레임에 두 번 눌러도 한 번으로 처리</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 08 SO ================= -->
+    <section id="s8">
+      <div class="sec-head"><span class="sec-n">08</span><h2>데이터 (ScriptableObject)</h2></div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">AttackData</span><span class="comp-path">Assets/Script/Data/AttackData/AttackData.cs</span><span class="comp-tag">abstract</span></div>
+        <p class="comp-desc">공격 하나 = 서브클래스 에셋 하나. <code>nextAttack</code>으로 콤보 체인을 잇는다. 다형성(<code>AllowsPlayerMovement</code> / <code>MoveSpeedMultiplier</code> / <code>ApplySelfMovement</code>) 덕분에 <b>Fighter에 공격 종류 분기가 하나도 없다.</b></p>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">damage · attackRange · attackRadius</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Fighter.PerformHitScan</div><div class="m-desc">위력과 판정 범위</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">knockbackForce · launchForce</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Fighter → HitData</div><div class="m-desc"><b>대상이 지상에 있을 때</b>의 수평 / 수직 넉백</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">airborneKnockbackForce · airborneLaunchForce</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Fighter → HitData</div><div class="m-desc"><b>대상이 이미 공중에 있을 때</b>. 저글링 튜닝은 이쪽 값</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">groundSlideDeceleration</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Locomotion</div><div class="m-desc">그라운드 넉백 초당 감속량</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">attackCooldown</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Fighter.StartAttack</div><div class="m-desc">콤보 <b>시작</b>만 쿨타임 체크. 콤보 중간 단계는 지속시간이 곧 쿨타임</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">attackClip</span><span class="m-args"> : AnimationClip</span><span class="badge b-so">[SO]</span></div><div class="m-caller">StateMachine.EnterAttack</div><div class="m-desc">지속시간 소스이자 CrossFade 대상. <b>Animator State 이름도 이 클립과 같아야 함</b></div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">durationOverride</span><span class="badge b-so">[SO]</span></div><div class="m-caller">ResolveDuration</div><div class="m-desc">0이면 클립 길이. 밸런스를 클립과 분리하고 싶은 공격에만 값을 넣음</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">nextAttack</span><span class="m-args"> : AttackData</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Fighter.AdvanceOrEnd</div><div class="m-desc">비우면 이 공격에서 콤보 종료</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">canCancelOtherAttacks</span><span class="m-args"> : bool</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Fighter.TryAttack</div><div class="m-desc">캔슬은 모든 공격의 권리가 아니라 <b>특정 공격만 갖는 특권</b>. 콤보 시작 공격에만 의미 있음</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">ResolveDuration</span><span class="m-args">() → float</span></div><div class="m-caller">Fighter.StartAttack</div><div class="m-desc"><code>durationOverride &gt; 0</code>이면 그 값, 아니면 <code>attackClip.length</code>, 둘 다 없으면 0</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">HasHitFrameEvent</span><span class="m-args">() → bool</span></div><div class="m-caller">Fighter.WarnIfMisconfigured</div><div class="m-desc">클립 이벤트 중 <code>"OnAttackHitFrame"</code>이 있는지 (매직 스트링)</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">AllowsPlayerMovement</span><span class="m-args"> : virtual bool</span></div><div class="m-caller">Fighter.MovementAllowed</div><div class="m-desc">기본 <code>true</code>. Locked / Impulse는 <code>false</code></div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">MoveSpeedMultiplier</span><span class="m-args"> : virtual float</span></div><div class="m-caller">Fighter.MoveSpeedMultiplier</div><div class="m-desc">기본 1. AllowInput만 오버라이드</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">ApplySelfMovement</span><span class="m-args">(Locomotion, Vector3 facingDir) : virtual</span></div><div class="m-caller">Fighter.StartAttack</div><div class="m-desc">기본 no-op. Impulse만 오버라이드(돌진)</div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">AllowInputAttackData : AttackData</span><span class="comp-path">.../AllowInputAttackData.cs</span><span class="comp-tag">DoitMySelf/Attack Data/Allow Input</span></div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">moveSpeedMultiplier</span><span class="badge b-so">[SO]</span><span class="m-args"> [Min(0)]</span></div><div class="m-caller">인스펙터</div><div class="m-desc">이 공격 중 이동 속도 배율</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">override MoveSpeedMultiplier</span></div><div class="m-caller">Fighter</div><div class="m-desc">위 필드 반환</div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">ImpulseAttackData : AttackData</span><span class="comp-path">.../ImpulseAttackData.cs</span><span class="comp-tag">DoitMySelf/Attack Data/Impulse</span></div>
+        <p class="comp-desc">enum <code>ImpulseDirection { Forward, Backward, Up, Down }</code> — Forward/Backward는 <code>FacingDir</code> 기준, <b>Up/Down은 월드 z축(벨트스크롤 깊이)이지 수직 점프가 아니다.</b></p>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">direction · selfMoveSpeed · selfMoveDeceleration</span><span class="badge b-so">[SO]</span></div><div class="m-caller">인스펙터</div><div class="m-desc">돌진 방향 / 속도 / 감속</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">override AllowsPlayerMovement</span></div><div class="m-caller">Fighter</div><div class="m-desc"><code>false</code></div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">override ApplySelfMovement</span></div><div class="m-caller">Fighter.StartAttack</div><div class="m-desc"><code>locomotion.ApplyKnockback(worldDir × selfMoveSpeed, selfMoveDeceleration)</code> — 넉백 슬라이드를 그대로 재사용</div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">ResolveWorldDirection</span><span class="m-args">(Vector3) → Vector3</span></div><div class="m-caller">ApplySelfMovement</div><div class="m-desc">enum → 월드 방향</div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">LockedAttackData : AttackData</span><span class="comp-path">.../LockedAttackData.cs</span><span class="comp-tag">DoitMySelf/Attack Data/Locked</span></div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">override AllowsPlayerMovement</span></div><div class="m-caller">Fighter</div><div class="m-desc"><code>false</code>. 추가 필드 없음 — 제자리 고정</div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">MovementStatData</span><span class="comp-path">Assets/Script/Data/MovementStatData.cs</span><span class="comp-tag">DoitMySelf/Movement Stat Data</span></div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">moveSpeed · gravityScale · jumpForce</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Locomotion.Awake</div><div class="m-desc">중력은 <code>GlobalPhysicsData.gravity × gravityScale</code></div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">bounceRestitution · bounceVelocityThreshold</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Locomotion.Awake</div><div class="m-desc">바운스 비율(0~1) / 이 속도 이하면 안 튕김(무한 바운스 방지)</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">airborneLaunchThreshold</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Locomotion.ApplyKnockback</div><div class="m-desc">넉백 수직 속도가 이 값 이하면 안 띄우고 그라운드 슬라이드로</div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">CharacterStatData</span><span class="comp-path">Assets/Script/Data/CharacterStatData.cs</span><span class="comp-tag">DoitMySelf/Character Stat Data</span></div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">maxHealth</span><span class="m-args"> : int</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Health</div><div class="m-desc">순수 데이터 컨테이너 — 로직 없음</div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">GlobalPhysicsData</span><span class="comp-path">Assets/Script/Data/GlobalPhysicsData.cs</span><span class="comp-tag req">Resources 폴더에 "GlobalPhysicsData" 이름으로 1개만</span></div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">gravity</span><span class="m-args"> : float</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Locomotion.Tick</div><div class="m-desc">전역 중력 가속도. 캐릭터별 무게는 <code>gravityScale</code>로만 조절</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">Instance</span><span class="m-args"> : static prop</span></div><div class="m-caller">Locomotion.Tick 매 프레임</div><div class="m-desc"><code>Resources.Load&lt;GlobalPhysicsData&gt;("GlobalPhysicsData")</code> 지연 캐싱</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 09 Combat contracts ================= -->
+    <section id="s9">
+      <div class="sec-head"><span class="sec-n">09</span><h2>전투 계약</h2></div>
+      <p class="sec-note">유지된 두 인터페이스. 나머지(<code>IStateMachineOwner</code> · <code>IAttackClipSource</code> · <code>IAttackEventListener</code> · <code>IJumpEventListener</code> · <code>IKnockdownEventListener</code>)는 “항상 같이 붙는 컴포넌트끼리의 결합 제거”용이라 삭제됐다.</p>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">IHittable · HitData</span><span class="comp-path">Assets/Script/Combat/IHittable.cs</span></div>
+        <p class="comp-desc">공격자와 대상이 <b>서로 다른 오브젝트</b>라 진짜로 디커플링이 필요한 자리. <code>Health</code>가 구현한다.</p>
+        <div class="comp-body">
+          <div class="member" data-k="ifc"><div class="m-sig"><span class="sym ifc">◆</span><span class="m-name">IHittable.OnHit</span><span class="m-args">(HitData hit)</span></div><div class="m-caller">공격자의 Fighter</div><div class="m-desc">맞을 수 있는 대상이 구현</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">HitData.Damage</span><span class="m-args"> : int</span></div><div class="m-caller">Health.OnHit</div><div class="m-desc">깎일 체력</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">HitData.KnockbackVelocity</span><span class="m-args"> : Vector3</span></div><div class="m-caller">ResolveKnockbackVelocity</div><div class="m-desc">대상이 <b>지상</b>일 때 쓸 속도</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">HitData.AirborneKnockbackVelocity</span><span class="m-args"> : Vector3</span></div><div class="m-caller">ResolveKnockbackVelocity</div><div class="m-desc">대상이 <b>공중</b>일 때 쓸 속도</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">HitData.GroundSlideDeceleration</span><span class="m-args"> : float</span></div><div class="m-caller">Locomotion</div><div class="m-desc">그라운드 넉백 감속</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">HitData.Attacker</span><span class="m-args"> : GameObject</span></div><div class="m-caller">—</div><div class="m-desc">때린 주체</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">ResolveKnockbackVelocity</span><span class="m-args">(bool isTargetAirborne) → Vector3</span></div><div class="m-caller">Health.OnHit</div><div class="m-desc">공격자는 대상이 떠 있는지 모른다 → <b>둘 다 실어 보내고 대상이 고른다.</b> <code>!IsGrounded</code>를 넘겨 호출</div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">IAttackRangeDebugInfo</span><span class="comp-path">Assets/Script/Combat/IAttackRangeDebugInfo.cs</span></div>
+        <p class="comp-desc">디버그 기즈모가 플레이어/적 어디에 붙어도 되게 뽑은 인터페이스. <code>Fighter</code>가 구현.</p>
+        <div class="comp-body">
+          <div class="member" data-k="ifc"><div class="m-sig"><span class="sym ifc">◆</span><span class="m-name">FacingDir · AttackRange · AttackRadius · IsAttacking</span></div><div class="m-caller">AttackRangeGizmo · CharacterStateDebugDisplay</div><div class="m-desc">판정 시각화에 필요한 최소 정보</div></div>
+          <div class="member" data-k="ifc"><div class="m-sig"><span class="sym ifc">◆</span><span class="m-name">OnAttackHitFrameFired</span><span class="badge b-ev">event Action</span></div><div class="m-caller">AttackRangeGizmo</div><div class="m-desc">실제 타격 판정 시점</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 10 World ================= -->
+    <section id="s10">
+      <div class="sec-head"><span class="sec-n">10</span><h2>월드 · 카메라</h2></div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">MapBounds</span><span class="comp-path">Assets/Script/Common/World/MapBounds.cs</span><span class="comp-tag">씬에 1개</span></div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">manualSize</span><span class="m-args"> : Vector3</span></div><div class="m-caller">인스펙터</div><div class="m-desc">(0,0,0)이면 자식 Renderer 크기로 자동 계산</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">Instance</span><span class="m-args"> : static prop</span></div><div class="m-caller">Locomotion.Tick</div><div class="m-desc"><code>FindFirstObjectByType&lt;MapBounds&gt;()</code> 지연 캐싱 — Awake 순서에 의존하지 않으려고</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">Bounds</span><span class="m-args"> : Bounds</span></div><div class="m-caller">Locomotion.Tick</div><div class="m-desc">캐시된 경계</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Awake</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc">싱글턴 등록 + <code>CalculateBounds</code>. 씬에 여러 개면 경고</div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">CalculateBounds</span><span class="m-args">() → Bounds</span></div><div class="m-caller">Awake · 기즈모</div><div class="m-desc">manualSize 또는 자식 Renderer 합집합(<code>Bounds.Encapsulate</code>)</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">OnDrawGizmosSelected</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity (에디터)</div><div class="m-desc">노란 와이어큐브</div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">BeltScrollCameraPivot</span><span class="comp-path">Assets/Script/Camera/BeltScrollCameraPivot.cs</span><span class="comp-tag">Cinemachine 미사용</span></div>
+        <p class="comp-desc">커스텀 벨트스크롤 추적 카메라. <b>이 파일만 영어 주석/스타일</b> — 나머지 코드와 컨벤션이 다르다.</p>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">target · smoothTime · deadzoneX/Y/Z · minX~maxZ · testGizmo</span></div><div class="m-caller">인스펙터</div><div class="m-desc">추적 대상 + 3축 데드존 + 스테이지 제한</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Start</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc">초기 offset / focusPoint 저장</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">LateUpdate</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity 매 프레임</div><div class="m-desc">3축 데드존 판정 → 스테이지 클램프 → <code>Vector3.SmoothDamp</code>. <b>LateUpdate인 이유: 대상이 이동한 뒤에 따라가야 함</b></div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">OnDrawGizmosSelected</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity (에디터)</div><div class="m-desc"><code>testGizmo</code> 켜면 데드존 큐브</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 11 Editor ================= -->
+    <section id="s11">
+      <div class="sec-head"><span class="sec-n">11</span><h2>에디터 유틸</h2></div>
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">KoreanLabelAttribute</span><span class="comp-path">Assets/Script/Common/Attributes/KoreanLabelAttribute.cs</span><span class="comp-tag">PropertyAttribute</span></div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">Label</span><span class="m-args"> : readonly string</span></div><div class="m-caller">KoreanLabelDrawer</div><div class="m-desc">인스펙터에 표시할 한글 이름. 실제 필드명엔 영향 없음</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">KoreanLabelAttribute</span><span class="m-args">(string label)</span></div><div class="m-caller">모든 직렬화 필드</div><div class="m-desc">드로어는 Editor 폴더에 있어 런타임 코드에서도 안전하게 참조 가능</div></div>
+        </div>
+      </div>
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">KoreanLabelDrawer</span><span class="comp-path">Assets/Script/Editor/KoreanLabelDrawer.cs</span><span class="comp-tag">CustomPropertyDrawer</span></div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">override OnGUI</span><span class="m-args">(Rect, SerializedProperty, GUIContent)</span></div><div class="m-caller">Unity 에디터</div><div class="m-desc">라벨만 한글로 바꿔 <code>EditorGUI.PropertyField</code>. Tooltip은 그대로 유지</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">override GetPropertyHeight</span></div><div class="m-caller">Unity 에디터</div><div class="m-desc">기본 높이</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 12 Debug ================= -->
+    <section id="s12">
+      <div class="sec-head"><span class="sec-n">12</span><h2>디버그 · 임시</h2></div>
+      <p class="sec-note">전부 “파일 삭제 + 컴포넌트 제거”만으로 떼어낼 수 있게 독립적으로 작성됨.</p>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">AttackRangeGizmo</span><span class="comp-path">Assets/Script/Test/AttackRangeGizmo.cs</span></div>
+        <p class="comp-desc">공격 판정 구체를 씬 뷰에 표시. <b>회색</b>=비공격 / <b>흰색</b>=재생 중 / <b>빨강</b>=타격 프레임 직후</p>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">hitFlashDuration · idleColor · attackingColor · hitFrameColor</span></div><div class="m-caller">인스펙터</div><div class="m-desc">표시 색과 유지 시간</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">OnEnable</span> / <span class="m-name">OnDisable</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc"><code>GetComponent&lt;IAttackRangeDebugInfo&gt;()</code> + <code>OnAttackHitFrameFired</code> 구독·해제</div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">HandleHitFrame</span><span class="m-args">()</span></div><div class="m-caller">이벤트 콜백</div><div class="m-desc"><code>hitFlashTimer</code> 리셋 — 단일 이벤트 프레임은 눈으로 못 보므로 붉은 표시를 잠깐 유지</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Update</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc"><code>hitFlashTimer</code> 감소</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">OnDrawGizmos</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity — <b>에디트 모드에도 돎</b></div><div class="m-desc">source 없으면 직접 <code>GetComponent</code>. 색 결정 후 <code>Gizmos.DrawLine</code> + <code>DrawWireSphere</code>. <b>Fighter 프로퍼티에 null 가드가 있는 이유가 이것</b></div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">CharacterStateDebugDisplay</span><span class="comp-path">Assets/Script/Test/CharacterStateDebugDisplay.cs</span></div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">offset</span><span class="m-args"> : Vector3</span></div><div class="m-caller">인스펙터</div><div class="m-desc">머리 위 표시 위치</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Awake</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc"><code>GetComponent&lt;CharacterStateMachine&gt;</code> + <code>&lt;IAttackRangeDebugInfo&gt;</code>(선택)</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">OnGUI</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity (플레이)</div><div class="m-desc"><code>Camera.main.WorldToScreenPoint</code> → <code>CurrentState</code> + <code>→</code> / <code>←</code> 화살표</div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">HealthDebugDisplay</span><span class="comp-path">Assets/Script/Test/HealthDebugDisplay.cs</span></div>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">offset</span><span class="m-args"> : Vector3</span></div><div class="m-caller">인스펙터</div><div class="m-desc">머리 위 표시 위치</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Awake</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc"><code>GetComponent&lt;Health&gt;()</code> — 예전엔 리플렉션이었으나 <code>Health</code> 분리 후 불필요해짐</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">OnGUI</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity (플레이)</div><div class="m-desc"><code>현재 / 최대</code> 체력 표시</div></div>
+        </div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-head"><span class="comp-name">FrameStepper</span><span class="comp-path">Assets/Script/Test/FrameStepper.cs</span><span class="comp-tag">TEMP</span></div>
+        <p class="comp-desc">플레이 중 프레임 단위 진행. <code>P</code> 일시정지 · <code>→</code> / <code>Space</code> 한 프레임 · <code>→</code> 길게 연속. 애니메이션 전환 같은 한두 프레임짜리 현상을 눈으로 잡을 때.</p>
+        <div class="comp-body">
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">pauseOnStart · holdRepeatDelay · holdRepeatInterval · logAnimator</span></div><div class="m-caller">인스펙터</div><div class="m-desc">연속 진행 타이밍 + 상태 로그 대상 Animator(선택)</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Start</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc"><code>normalScale</code> 캡처, <code>pauseOnStart</code> 처리</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">OnDisable</span> / <span class="m-name">OnApplicationQuit</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc"><code>Time.timeScale</code> 원복 — 0인 채로 남지 않게</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">Update</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity</div><div class="m-desc"><code>advancing</code>이면 이번 프레임 후 다시 <code>timeScale=0</code>. 아니면 키 입력 처리</div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">SetPaused</span><span class="m-args">(bool)</span></div><div class="m-caller">Update</div><div class="m-desc"><code>Time.timeScale</code> 0 ↔ normalScale</div></div>
+          <div class="member" data-k="priv"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">LogAnimatorState</span><span class="m-args">()</span></div><div class="m-caller">Update (스텝 직후)</div><div class="m-desc">현재 클립 이름 / <code>normalizedTime</code> / 전환 정보 Console 출력</div></div>
+          <div class="member" data-k="priv uni"><div class="m-sig"><span class="sym priv">·</span><span class="m-name">OnGUI</span><span class="badge b-k">(k)</span></div><div class="m-caller">Unity (플레이)</div><div class="m-desc">좌상단 <code>PAUSED / step N</code> 표시</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 13 magic ================= -->
+    <section id="s13">
+      <div class="sec-head"><span class="sec-n">13</span><h2>Unity 매직 메서드 색인</h2></div>
+      <div class="tw"><table>
+        <thead><tr><th style="width:190px" class="mono">메서드</th><th>쓰는 파일</th><th>주의</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Awake</td><td>Actor · Locomotion · Fighter · Health · CharacterStateMachine · AnimationEventRelay · PlayerInput · MapBounds · 디버그 3개</td><td>플레이 모드에서만. <b>시블링 캐싱은 전부 여기</b></td></tr>
+          <tr><td class="mono">Start</td><td>BeltScrollCameraPivot · FrameStepper</td><td>Awake 다음</td></tr>
+          <tr><td class="mono">Update</td><td><b>Actor</b>(몸 컴포넌트 중 유일) · AttackRangeGizmo · FrameStepper</td><td>몸 컴포넌트는 자기 Update가 없다 → 실행 순서 버그 불가</td></tr>
+          <tr><td class="mono">LateUpdate</td><td>BeltScrollCameraPivot</td><td>카메라는 대상 이동 후에 따라가야 하므로</td></tr>
+          <tr><td class="mono">OnEnable / OnDisable</td><td>PlayerInput · AttackRangeGizmo</td><td>이벤트 구독 / 해제</td></tr>
+          <tr><td class="mono">OnDestroy</td><td>PlayerInput</td><td><code>InputAction.Dispose()</code></td></tr>
+          <tr><td class="mono">OnApplicationQuit</td><td>FrameStepper</td><td><code>timeScale</code> 원복</td></tr>
+          <tr><td class="mono">OnGUI</td><td>CharacterStateDebugDisplay · HealthDebugDisplay · FrameStepper</td><td><b>플레이 모드 전용</b> (에디트 모드엔 안 돎)</td></tr>
+          <tr><td class="mono">OnDrawGizmos</td><td>AttackRangeGizmo</td><td><b>에디트 모드에도 돎</b> → 참조 미해결 상태 대비 필요</td></tr>
+          <tr><td class="mono">OnDrawGizmosSelected</td><td>MapBounds · BeltScrollCameraPivot</td><td>선택했을 때만</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ================= 14 anim events ================= -->
+    <section id="s14">
+      <div class="sec-head"><span class="sec-n">14</span><h2>Animation Event 색인</h2></div>
+      <p class="sec-note">클립에 심는 이벤트 → <b>Animator가 붙은 GameObject(Visual 자식)의 <code>AnimationEventRelay</code></b>가 받음 → 루트로 중계.</p>
+      <div class="tw"><table>
+        <thead><tr><th class="mono">이벤트 이름</th><th>심는 클립</th><th>위치</th><th class="mono">Relay → </th><th>최종 처리</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">OnAttackHitFrame</td><td>각 공격 클립<br>(Attack 1/2/3, 적 Attack)</td><td>타격 프레임</td><td class="mono">Fighter</td><td><code>PerformHitScan</code> — 그 시점의 위치/방향으로</td></tr>
+          <tr><td class="mono">OnJumpLaunchFrame</td><td>JumpStart</td><td>발이 떨어지는 프레임</td><td class="mono">StateMachine</td><td><code>Locomotion.Jump()</code> — 여기서 비로소 뜬다</td></tr>
+          <tr><td class="mono">OnJumpLandEndFrame</td><td>JumpLand</td><td>마지막 프레임</td><td class="mono">StateMachine</td><td>착지 경직 해제</td></tr>
+          <tr><td class="mono">OnKnockdownGetUpStartFrame</td><td>Landed</td><td>마지막 프레임</td><td class="mono">StateMachine</td><td>Landed → GetUp</td></tr>
+          <tr><td class="mono">OnKnockdownGetUpEndFrame</td><td>GetUp</td><td>마지막 프레임</td><td class="mono">StateMachine</td><td>기상 완료</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note"><code>AttackData.HasHitFrameEvent()</code>가 <code>"OnAttackHitFrame"</code> 문자열을 직접 검사한다(매직 스트링). 이름을 바꾸면 양쪽을 같이 고쳐야 한다.</div>
+    </section>
+
+    <!-- ================= 15 api ================= -->
+    <section id="s15">
+      <div class="sec-head"><span class="sec-n">15</span><h2>자주 쓰는 Unity API 색인</h2></div>
+      <div class="tw"><table>
+        <thead><tr><th style="width:290px" class="mono">API</th><th style="width:210px">쓰는 곳</th><th>메모</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">GetComponent&lt;T&gt;()</td><td>거의 모든 Awake</td><td><b>인터페이스도 됨</b> — <code>&lt;IIntentSource&gt;</code>, <code>&lt;IHittable&gt;</code> 등</td></tr>
+          <tr><td class="mono">GetComponentInParent&lt;T&gt;()</td><td>AnimationEventRelay</td><td>Visual 자식 → 루트</td></tr>
+          <tr><td class="mono">GetComponentInChildren&lt;T&gt;()</td><td>CharacterStateMachine · MapBounds</td><td>루트 → Visual 자식 (Animator / SpriteRenderer / Renderer)</td></tr>
+          <tr><td class="mono">FindFirstObjectByType&lt;T&gt;()</td><td>MapBounds.Instance</td><td>지연 싱글턴. 구 <code>FindObjectOfType</code> 대체</td></tr>
+          <tr><td class="mono">Physics.OverlapSphere(center, r, mask)</td><td>Fighter.PerformHitScan</td><td>3D. <code>LayerMask</code> → <code>int</code> 암시 변환</td></tr>
+          <tr><td class="mono">Animator.HasState(0, hash)</td><td>StateMachine.CrossFade</td><td>State가 없으면 CrossFade가 <b>조용히 실패</b>하므로 먼저 확인</td></tr>
+          <tr><td class="mono">Animator.Play(hash, 0, 0f)</td><td>StateMachine.CrossFade (블렌드 0)</td><td>하드 컷. 전환 상태를 안 남김 — 스프라이트 깜빡임 방지</td></tr>
+          <tr><td class="mono">Animator.CrossFadeInFixedTime(hash, sec)</td><td>StateMachine.CrossFade (블렌드 &gt;0)</td><td><code>CrossFade</code>의 duration은 “초”가 아니라 <b>현재 클립 길이에 대한 비율</b>이라 이걸 씀</td></tr>
+          <tr><td class="mono">Animator.StringToHash(name)</td><td>StateMachine</td><td>State 이름 → 해시</td></tr>
+          <tr><td class="mono">GetCurrentAnimatorStateInfo(0) 외</td><td>FrameStepper.LogAnimatorState</td><td><code>GetCurrentAnimatorClipInfo</code> · <code>IsInTransition</code> · <code>GetAnimatorTransitionInfo</code> · <code>GetNextAnimatorClipInfo</code></td></tr>
+          <tr><td class="mono">Resources.Load&lt;T&gt;("name")</td><td>GlobalPhysicsData.Instance</td><td>Resources 폴더 필수</td></tr>
+          <tr><td class="mono">Debug.LogWarning(msg, context)</td><td>여러 곳</td><td>2번째 인자(Object)를 넘기면 <b>경고 클릭 시 해당 에셋 하이라이트</b></td></tr>
+          <tr><td class="mono">Time.time</td><td>Fighter (쿨타임)</td><td>게임 시작 후 누적 초</td></tr>
+          <tr><td class="mono">Time.deltaTime</td><td>Actor · Locomotion · Fighter · StateMachine · AttackRangeGizmo</td><td>프레임 간격 (<code>timeScale</code> 영향 받음)</td></tr>
+          <tr><td class="mono">Time.unscaledDeltaTime</td><td>FrameStepper</td><td><code>timeScale</code> 무시 — 일시정지 중 키 입력 타이밍</td></tr>
+          <tr><td class="mono">Time.timeScale</td><td>FrameStepper</td><td>0으로 멈추고 1프레임만 풀었다 다시 0</td></tr>
+          <tr><td class="mono">Keyboard.current.&lt;key&gt;.wasPressedThisFrame</td><td>FrameStepper</td><td><b>New Input System.</b> <code>UnityEngine.Input</code>은 이 프로젝트에서 비활성</td></tr>
+          <tr><td class="mono">new InputAction(...) + AddCompositeBinding</td><td>PlayerInput</td><td><code>"2DVector"</code> 콤포지트로 WASD / 방향키</td></tr>
+          <tr><td class="mono">Vector3.SmoothDamp</td><td>BeltScrollCameraPivot</td><td>부드러운 카메라 추적</td></tr>
+          <tr><td class="mono">Bounds.Encapsulate</td><td>MapBounds</td><td>자식 Renderer 합집합</td></tr>
+          <tr><td class="mono">Gizmos.DrawLine / DrawWireSphere / DrawWireCube</td><td>AttackRangeGizmo · MapBounds · CameraPivot</td><td>씬 뷰 표시</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ================= 16 rules ================= -->
+    <section id="s16">
+      <div class="sec-head"><span class="sec-n">16</span><h2>명명 규칙 · 계약</h2></div>
+      <p class="sec-note">깨면 컴파일은 통과하고 <b>런타임에 조용히 버그</b>가 되는 것들.</p>
+      <div class="rules">
+        <div class="rule">
+          <div class="rule-h">Animator State 이름 == <code>CharacterState</code> 값 == 공격 클립 이름</div>
+          <div class="rule-b"><code>CrossFade</code>가 문자열/해시로 매칭한다. 없으면 조용히 실패하고 이전 클립이 계속 재생된다 — “움직이는데 Idle 자세” 증상. 경고는 상태당 1회만 뜬다.</div>
+        </div>
+        <div class="rule">
+          <div class="rule-h"><code>AnimationEventRelay</code>는 Visual 자식(Animator가 있는 곳)에</div>
+          <div class="rule-b">애니메이션 이벤트는 Animator가 붙은 GameObject로만 전달된다. 루트에 붙이면 “has no receiver!” 경고가 뜨고, 그 동작은 워치독 타임아웃으로만 풀린다.</div>
+        </div>
+        <div class="rule">
+          <div class="rule-h">스프라이트 애니메이션 클립: 원샷은 Loop Time 끄기, 전환 블렌드 0</div>
+          <div class="rule-b">스프라이트는 프레임 사이를 보간할 수 없다. 블렌드가 있으면 두 클립 프레임이 번갈아 보이고, loop면 이벤트 발동과 상태 전환 사이 1프레임에 0프레임이 튀어나온다(Landed → GetUp 깜빡임의 원인).</div>
+        </div>
+        <div class="rule">
+          <div class="rule-h">인터페이스는 “어디 붙을지 모르는 것”에만</div>
+          <div class="rule-b"><code>IHittable</code>(공격자 ≠ 대상) · <code>IAttackRangeDebugInfo</code>(디버그 툴)만 남긴다. “항상 같이 붙는 컴포넌트끼리의 결합 제거”용 인터페이스는 만들지 않는다 — 구조만 늘고 얻는 게 없다.</div>
+        </div>
+        <div class="rule">
+          <div class="rule-h">“진행 중 동작”(고정 상태) vs “물리적 사실”(Idle/Move/InAir/Stun/Airborne) 구분</div>
+          <div class="rule-b">고정 상태는 명시적으로만 탈출하고, 물리 파생은 매 프레임 재계산된다. <code>Evaluate</code>가 고정 상태면 조기 반환하는 것이 두 층을 가르는 유일한 지점이다.</div>
+        </div>
+        <div class="rule">
+          <div class="rule-h"><code>Locomotion</code>은 아무도 호출하지 않는다 (Jump 1건 예외)</div>
+          <div class="rule-b">의존 그래프의 종점. 이동 로직이 단방향으로 격리되어 있어야 물리 튜닝이 다른 곳을 흔들지 않는다.</div>
+        </div>
+        <div class="rule">
+          <div class="rule-h">캐릭터당 콜라이더 1개 (<code>targetLayer</code>에 포함되는 것)</div>
+          <div class="rule-b">여러 개면 <code>OverlapSphere</code>가 그 수만큼 반환해 <code>OnHit</code>이 중복 호출된다 → 데미지 2배 + 뒤 호출이 넉백을 덮어씀. <code>Fighter</code>가 <code>hitThisScan</code>으로 방어하긴 하지만 정석은 1개.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 17 leftovers ================= -->
+    <section id="s17">
+      <div class="sec-head"><span class="sec-n">--</span><h2>알려진 잔재 (정리 대상)</h2></div>
+      <div class="tw"><table>
+        <thead><tr><th style="width:300px">항목</th><th>내용</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">주석의 CombatCore / MovementCore</td><td><code>IHittable.cs</code> · <code>AttackData.cs</code> · <code>ImpulseAttackData.cs</code> · <code>IAttackRangeDebugInfo.cs</code> 주석에 이제 없는 클래스 이름이 남아 있음</td></tr>
+          <tr><td class="mono">Attack 3.anim</td><td>콤보가 2타로 줄면서 참조 없는 고아. Player Animator의 “Attack 3” State도 같이. 3타를 살릴 때 재사용 가능</td></tr>
+          <tr><td class="mono">FrameStepper.cs</td><td>프레임 단위 진행 디버그 도구(임시). 필요 없어지면 삭제</td></tr>
+          <tr><td class="mono">더미의 자식 Collider</td><td>루트 BoxCollider와 중복. 대상당 콜라이더 1개가 정석</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <div class="empty" id="empty">검색 결과가 없습니다.</div>
+  </div>
+</main>
+</div>
+
+<script>
+(function(){
+  var q = document.getElementById('q');
+  var chips = document.getElementById('chips');
+  var countEl = document.getElementById('count');
+  var emptyEl = document.getElementById('empty');
+  var sel = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var members = sel('.member');
+  var rows = sel('.tw tbody tr');
+  var rules = sel('.rule');
+  var comps = sel('.comp');
+  var tws = sel('.tw');
+  var figures = sel('.figure');
+  var notes = sel('.note');
+  var sections = sel('section');
+  var navLinks = sel('.rail-nav a');
+
+  // 검색 대상 텍스트를 미리 캐싱 (입력마다 textContent를 다시 읽지 않게)
+  [members, rows, rules, comps].forEach(function(list){
+    list.forEach(function(el){ el.dataset.text = el.textContent.toLowerCase(); });
+  });
+
+  var kind = 'all';
+
+  function apply(){
+    var term = q.value.trim().toLowerCase();
+    var byKind = kind !== 'all';
+    var byTerm = term.length > 0;
+    var shown = 0;
+
+    members.forEach(function(m){
+      var okKind = !byKind || (m.dataset.k || '').split(' ').indexOf(kind) !== -1;
+      var okTerm = !byTerm || m.dataset.text.indexOf(term) !== -1;
+      var vis = okKind && okTerm;
+      m.classList.toggle('hide', !vis);
+      if (vis) shown++;
+    });
+
+    // 색인 표의 행과 규칙 카드도 같이 검색된다. 종류 필터(public 등)는 멤버에만 있는 개념이라
+    // 필터가 걸리면 표·규칙은 통째로 숨긴다.
+    rows.forEach(function(r){
+      var vis = !byKind && (!byTerm || r.dataset.text.indexOf(term) !== -1);
+      r.classList.toggle('hide', !vis);
+      if (vis && byTerm) shown++;
+    });
+    rules.forEach(function(r){
+      var vis = !byKind && (!byTerm || r.dataset.text.indexOf(term) !== -1);
+      r.classList.toggle('hide', !vis);
+      if (vis && byTerm) shown++;
+    });
+
+    comps.forEach(function(c){
+      c.classList.toggle('hide', !c.querySelector('.member:not(.hide)'));
+    });
+    tws.forEach(function(t){
+      t.classList.toggle('hide', !t.querySelector('tbody tr:not(.hide)'));
+    });
+    // 다이어그램과 설명 박스는 훑어보기용이라, 검색·필터 중에는 접어둔다.
+    figures.concat(notes).forEach(function(el){
+      el.classList.toggle('hide', byKind || byTerm);
+    });
+
+    sections.forEach(function(s){
+      var any = s.querySelector('.member:not(.hide), .tw:not(.hide), .rule:not(.hide)');
+      s.classList.toggle('hide', (byKind || byTerm) && !any);
+    });
+
+    emptyEl.classList.toggle('show', !sections.some(function(s){
+      return !s.classList.contains('hide');
+    }));
+
+    countEl.textContent = (byKind || byTerm)
+      ? shown + '건'
+      : members.length + '개 멤버';
+  }
+
+  q.addEventListener('input', apply);
+  chips.addEventListener('click', function(e){
+    var b = e.target.closest('.chip');
+    if (!b) return;
+    kind = b.dataset.k;
+    chips.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('on', c === b); });
+    apply();
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === '/' && document.activeElement !== q){ e.preventDefault(); q.focus(); }
+    if (e.key === 'Escape' && document.activeElement === q){ q.value=''; apply(); q.blur(); }
+  });
+
+  // scrollspy
+  var byId = {};
+  navLinks.forEach(function(a){ byId[a.getAttribute('href').slice(1)] = a; });
+  if ('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting){
+          navLinks.forEach(function(a){ a.classList.remove('on'); });
+          var a = byId[en.target.id];
+          if (a) a.classList.add('on');
+        }
+      });
+    }, { rootMargin: '-72px 0px -70% 0px', threshold: 0 });
+    sections.forEach(function(s){ io.observe(s); });
+  }
+
+  apply();
+})();
+</script>
+</body>
+</html>
