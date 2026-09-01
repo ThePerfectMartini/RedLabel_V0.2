@@ -35,10 +35,10 @@ public class ImpulseAttackData : AttackData
 
     public override bool AllowsPlayerMovement => false;
 
-    public override void ApplySelfMovement(MovementCore movement, Vector3 facingDir)
+    public override void ApplySelfMovement(Locomotion locomotion, Vector3 facingDir)
     {
         Vector3 worldDir = ResolveWorldDirection(facingDir);
-        movement.ApplyKnockback(worldDir.normalized * selfMoveSpeed, selfMoveDeceleration);
+        locomotion.ApplyKnockback(worldDir.normalized * selfMoveSpeed, selfMoveDeceleration);
     }
 
     Vector3 ResolveWorldDirection(Vector3 facingDir)

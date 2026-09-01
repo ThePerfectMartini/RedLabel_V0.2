@@ -107,5 +107,5 @@ public abstract class AttackData : ScriptableObject
     public virtual float MoveSpeedMultiplier => 1f;
 
     /// <summary>공격 시작 시 자기 자신에게 걸리는 강제 이동(돌진 등). 기본은 아무 것도 하지 않음.</summary>
-    public virtual void ApplySelfMovement(MovementCore movement, Vector3 facingDir) { }
+    public virtual void ApplySelfMovement(Locomotion locomotion, Vector3 facingDir) { }
 }

@@ -14,10 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LockedAttackData
   damage: 10
   attackRange: 1.5
-  attackRadius: 1
-  knockbackForce: 12
+  attackRadius: 2
+  knockbackForce: 6
   launchForce: 0
+  airborneKnockbackForce: 6
+  airborneLaunchForce: 6
   groundSlideDeceleration: 30
-  attackCooldown: 0
+  attackCooldown: 0.1
   attackClip: {fileID: 7400000, guid: 370a5e11d76612c4ca6b2fe76fd19b00, type: 2}
-  nextAttack: {fileID: 11400000, guid: 1d57be93f2b1a2f4d9abf748a7e6204e, type: 2}
+  durationOverride: 0
+  nextAttack: {fileID: 11400000, guid: 9609df3a55b0c0c4ea83b17b09e0fec1, type: 2}
+  canCancelOtherAttacks: 0
