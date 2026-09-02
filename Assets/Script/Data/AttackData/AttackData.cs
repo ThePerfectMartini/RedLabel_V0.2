@@ -70,7 +70,14 @@ public abstract class AttackData : ScriptableObject
     }
 
     /// <summary>
-    /// 이 공격의 클립에 타격 판정용 Animation Event("OnAttackHitFrame")가 실제로 심어져 있는지.
+    /// 타격 판정 Animation Event의 함수 이름. 클립에 심는 이름은 이벤트를 실제로 받는
+    /// <see cref="AnimationEventRelay"/>의 메서드 이름과 반드시 같아야 하므로 nameof로 묶어둔다
+    /// (한쪽만 바꾸면 컴파일이 깨져서 바로 드러난다).
+    /// </summary>
+    public const string HitFrameEventName = nameof(AnimationEventRelay.OnAttackHitFrame);
+
+    /// <summary>
+    /// 이 공격의 클립에 타격 판정용 Animation Event가 실제로 심어져 있는지.
     /// 이게 없으면 공격은 재생되지만 판정이 한 번도 나가지 않고, 캔슬 허용 시점도 영영 열리지 않는다.
     /// durationOverride로 지속시간만 정해둔 경우에도 클립 자체는 필요하다.
     /// </summary>
@@ -80,7 +87,7 @@ public abstract class AttackData : ScriptableObject
 
         foreach (AnimationEvent evt in attackClip.events)
         {
-            if (evt.functionName == "OnAttackHitFrame")
+            if (evt.functionName == HitFrameEventName)
                 return true;
         }
 

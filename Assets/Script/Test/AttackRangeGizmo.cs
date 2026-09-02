@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 테스트용: 공격 판정 범위(CombatCore.PerformHitScan과 동일한 위치/반경)를
+/// 테스트용: 공격 판정 범위(Fighter.PerformHitScan과 동일한 위치/반경)를
 /// 씬 뷰에 기즈모 구체로 표시한다. 지금이 공격의 어느 타이밍인지 색으로 구분한다.
 /// - 회색: 공격 중이 아님
 /// - 흰색: 공격 애니메이션 재생 중 (아직 타격 판정 전)
@@ -9,7 +9,7 @@ using UnityEngine;
 ///   (실제 판정은 애니메이션의 단일 이벤트 프레임에서 한 번만 일어나 눈으로 보기 어려우므로,
 ///   보기 편하게 붉은 표시를 잠깐 유지시킨다)
 ///
-/// [준비물] IAttackRangeDebugInfo를 구현한 컴포넌트(PlayerController 또는 EnemyController)와
+/// [준비물] IAttackRangeDebugInfo를 구현한 컴포넌트(Fighter)와
 /// 같은 오브젝트에 붙일 것.
 /// </summary>
 public class AttackRangeGizmo : MonoBehaviour

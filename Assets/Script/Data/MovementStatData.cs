@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// MovementCore에 주입할 이동 관련 스탯 데이터.
+/// Locomotion에 주입할 이동 관련 스탯 데이터.
 /// BoundaryRadius/GroundOffset은 콜라이더 크기로 자동 계산되는 값이라 여기 포함하지 않는다.
 /// </summary>
 [CreateAssetMenu(fileName = "MovementStatData", menuName = "DoitMySelf/Movement Stat Data")]

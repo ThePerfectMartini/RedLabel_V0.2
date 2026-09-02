@@ -192,7 +192,7 @@ public class Fighter : MonoBehaviour, IAttackRangeDebugInfo
         if (data.ResolveDuration() <= 0f)
             Debug.LogWarning($"{data.name}: 공격 클립도 '지속시간 직접 지정'도 없어 공격이 시작하자마자 끝납니다.", data);
         if (!data.HasHitFrameEvent())
-            Debug.LogWarning($"{data.name}: 클립에 'OnAttackHitFrame' Animation Event가 없어 타격 판정이 나가지 않고 " +
-                             "이 공격으로 다른 공격을 캔슬할 수도 없습니다.", data);
+            Debug.LogWarning($"{data.name}: 클립에 '{AttackData.HitFrameEventName}' Animation Event가 없어 " +
+                             "타격 판정이 나가지 않고 이 공격으로 다른 공격을 캔슬할 수도 없습니다.", data);
     }
 }

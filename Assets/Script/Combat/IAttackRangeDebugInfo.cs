@@ -10,10 +10,10 @@ public interface IAttackRangeDebugInfo
     /// <summary>공격 판정이 나가는 방향.</summary>
     Vector3 FacingDir { get; }
 
-    /// <summary>현재 CombatCore에 적용된 공격의 사거리.</summary>
+    /// <summary>현재 Fighter에 적용된 공격의 사거리.</summary>
     float AttackRange { get; }
 
-    /// <summary>현재 CombatCore에 적용된 공격의 판정 반경.</summary>
+    /// <summary>현재 Fighter에 적용된 공격의 판정 반경.</summary>
     float AttackRadius { get; }
 
     /// <summary>공격 애니메이션이 재생 중인지 (콤보 대기 포함, 타격 판정 여부와는 무관).</summary>

@@ -30,7 +30,7 @@ public class ImpulseAttackData : AttackData
     public float selfMoveSpeed = 10f;
 
     [KoreanLabel("돌진 감속")]
-    [Tooltip("돌진 속도가 초당 이만큼 줄어든다 (MovementCore.ApplyKnockback의 그라운드 슬라이드 감속을 그대로 재사용)")]
+    [Tooltip("돌진 속도가 초당 이만큼 줄어든다 (Locomotion.ApplyKnockback의 그라운드 슬라이드 감속을 그대로 재사용)")]
     public float selfMoveDeceleration = 20f;
 
     public override bool AllowsPlayerMovement => false;

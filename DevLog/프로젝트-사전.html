@@ -302,7 +302,7 @@ tbody tr.hide{display:none;}
     <a href="#s14"><span class="nav-n">14</span>Animation Event</a>
     <a href="#s15"><span class="nav-n">15</span>Unity API</a>
     <a href="#s16"><span class="nav-n">16</span>명명 규칙 · 계약</a>
-    <a href="#s17"><span class="nav-n">--</span>알려진 잔재</a>
+    <a href="#s17"><span class="nav-n">--</span>의도적으로 남긴 것</a>
   </nav>
 
   <div class="legend">
@@ -757,8 +757,9 @@ tbody tr.hide{display:none;}
           <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">durationOverride</span><span class="badge b-so">[SO]</span></div><div class="m-caller">ResolveDuration</div><div class="m-desc">0이면 클립 길이. 밸런스를 클립과 분리하고 싶은 공격에만 값을 넣음</div></div>
           <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">nextAttack</span><span class="m-args"> : AttackData</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Fighter.AdvanceOrEnd</div><div class="m-desc">비우면 이 공격에서 콤보 종료</div></div>
           <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">canCancelOtherAttacks</span><span class="m-args"> : bool</span><span class="badge b-so">[SO]</span></div><div class="m-caller">Fighter.TryAttack</div><div class="m-desc">캔슬은 모든 공격의 권리가 아니라 <b>특정 공격만 갖는 특권</b>. 콤보 시작 공격에만 의미 있음</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">HitFrameEventName</span><span class="m-args"> : const string</span></div><div class="m-caller">HasHitFrameEvent · Fighter 경고</div><div class="m-desc"><code>nameof(AnimationEventRelay.OnAttackHitFrame)</code>. 클립에 심는 이름과 실제 수신 메서드를 컴파일 타임에 묶어둔 것</div></div>
           <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">ResolveDuration</span><span class="m-args">() → float</span></div><div class="m-caller">Fighter.StartAttack</div><div class="m-desc"><code>durationOverride &gt; 0</code>이면 그 값, 아니면 <code>attackClip.length</code>, 둘 다 없으면 0</div></div>
-          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">HasHitFrameEvent</span><span class="m-args">() → bool</span></div><div class="m-caller">Fighter.WarnIfMisconfigured</div><div class="m-desc">클립 이벤트 중 <code>"OnAttackHitFrame"</code>이 있는지 (매직 스트링)</div></div>
+          <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">HasHitFrameEvent</span><span class="m-args">() → bool</span></div><div class="m-caller">Fighter.WarnIfMisconfigured</div><div class="m-desc">클립 이벤트 중 <code>HitFrameEventName</code>이 있는지</div></div>
           <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">AllowsPlayerMovement</span><span class="m-args"> : virtual bool</span></div><div class="m-caller">Fighter.MovementAllowed</div><div class="m-desc">기본 <code>true</code>. Locked / Impulse는 <code>false</code></div></div>
           <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">MoveSpeedMultiplier</span><span class="m-args"> : virtual float</span></div><div class="m-caller">Fighter.MoveSpeedMultiplier</div><div class="m-desc">기본 1. AllowInput만 오버라이드</div></div>
           <div class="member" data-k="pub"><div class="m-sig"><span class="sym pub">▶</span><span class="m-name">ApplySelfMovement</span><span class="m-args">(Locomotion, Vector3 facingDir) : virtual</span></div><div class="m-caller">Fighter.StartAttack</div><div class="m-desc">기본 no-op. Impulse만 오버라이드(돌진)</div></div>
@@ -976,7 +977,7 @@ tbody tr.hide{display:none;}
           <tr><td class="mono">OnKnockdownGetUpEndFrame</td><td>GetUp</td><td>마지막 프레임</td><td class="mono">StateMachine</td><td>기상 완료</td></tr>
         </tbody>
       </table></div>
-      <div class="note"><code>AttackData.HasHitFrameEvent()</code>가 <code>"OnAttackHitFrame"</code> 문자열을 직접 검사한다(매직 스트링). 이름을 바꾸면 양쪽을 같이 고쳐야 한다.</div>
+      <div class="note"><code>AttackData.HitFrameEventName</code>이 <code>nameof(AnimationEventRelay.OnAttackHitFrame)</code>으로 정의돼 있어, 릴레이 메서드 이름을 바꾸면 <b>컴파일이 깨진다</b> — 더 이상 매직 스트링이 아니다.</div>
     </section>
 
     <!-- ================= 15 api ================= -->
@@ -1048,14 +1049,14 @@ tbody tr.hide{display:none;}
 
     <!-- ================= 17 leftovers ================= -->
     <section id="s17">
-      <div class="sec-head"><span class="sec-n">--</span><h2>알려진 잔재 (정리 대상)</h2></div>
+      <div class="sec-head"><span class="sec-n">--</span><h2>의도적으로 남겨둔 것</h2></div>
+      <p class="sec-note">정리 대상이 아니라 <b>판단해서 남긴 것들</b>. 지우려 하기 전에 아래 이유를 먼저 볼 것.</p>
       <div class="tw"><table>
-        <thead><tr><th style="width:300px">항목</th><th>내용</th></tr></thead>
+        <thead><tr><th style="width:300px">항목</th><th>왜 남겼나</th></tr></thead>
         <tbody>
-          <tr><td class="mono">주석의 CombatCore / MovementCore</td><td><code>IHittable.cs</code> · <code>AttackData.cs</code> · <code>ImpulseAttackData.cs</code> · <code>IAttackRangeDebugInfo.cs</code> 주석에 이제 없는 클래스 이름이 남아 있음</td></tr>
-          <tr><td class="mono">Attack 3.anim</td><td>콤보가 2타로 줄면서 참조 없는 고아. Player Animator의 “Attack 3” State도 같이. 3타를 살릴 때 재사용 가능</td></tr>
-          <tr><td class="mono">FrameStepper.cs</td><td>프레임 단위 진행 디버그 도구(임시). 필요 없어지면 삭제</td></tr>
-          <tr><td class="mono">더미의 자식 Collider</td><td>루트 BoxCollider와 중복. 대상당 콜라이더 1개가 정석</td></tr>
+          <tr><td class="mono">Attack 3.anim<br>+ Animator "Attack 3" State</td><td>콤보를 2타로 줄이면서 참조가 끊겼지만 <b>애니메이션 작업물이라 보류</b>. 3타를 살리려면 <code>AllowInputAttackData</code> 에셋을 만들어 <code>AttackData_Impulse.nextAttack</code>에 연결하면 그대로 부활한다</td></tr>
+          <tr><td class="mono">FrameStepper.cs</td><td>프레임 단위 진행 디버그 도구. 애니메이션 전환 같은 한두 프레임짜리 문제가 또 나올 때 바로 쓰려고 유지</td></tr>
+          <tr><td class="mono">주석 속 ActionPhase /<br>IEnemyBrain.Think(owner)</td><td>없어진 이름이지만 <b>“예전엔 이랬는데 왜 바꿨는지”를 설명하는 기록</b>이라 유지 (<code>CharacterStateMachine.cs</code> · <code>IIntentSource.cs</code>)</td></tr>
         </tbody>
       </table></div>
     </section>
