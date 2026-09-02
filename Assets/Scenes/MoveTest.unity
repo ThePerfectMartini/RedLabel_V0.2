@@ -565,15 +565,17 @@ GameObject:
   m_Component:
   - component: {fileID: 362135765}
   - component: {fileID: 362135768}
+  - component: {fileID: 362135774}
   - component: {fileID: 362135771}
   - component: {fileID: 362135773}
-  - component: {fileID: 362135774}
   - component: {fileID: 362135780}
   - component: {fileID: 362135779}
   - component: {fileID: 362135778}
   - component: {fileID: 362135777}
   - component: {fileID: 362135776}
   - component: {fileID: 362135775}
+  - component: {fileID: 362135781}
+  - component: {fileID: 362135782}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -743,6 +745,43 @@ MonoBehaviour:
   movementStatData: {fileID: 11400000, guid: 85f96388ba4f8fa4e9c70a2f600a3021, type: 2}
   use8DirectionSnap: 1
   MoveSpeedMultiplier: 1
+--- !u!114 &362135781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 362135759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7e0d4cc4c46e3d4f86555e55a4d3a77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Dodger
+  dodgeDuration: 0.4
+  invulnerableStartDelay: 0.05
+  invulnerableDuration: 0.25
+  cooldown: 0.6
+  dashSpeed: 12
+  dashDeceleration: 30
+--- !u!114 &362135782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 362135759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4eb43c3f6ce633b4e854242cd218da46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Parrier
+  parryStanceDuration: 0.4
+  activeStartDelay: 0.06
+  activeDuration: 0.15
+  successLockDuration: 0.3
+  cooldown: 0.6
+  staggerForce: 5
+  staggerDeceleration: 8
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1161,6 +1200,7 @@ GameObject:
   - component: {fileID: 1532098326}
   - component: {fileID: 1532098325}
   - component: {fileID: 1532098324}
+  - component: {fileID: 1532098329}
   m_Layer: 7
   m_Name: Enemy
   m_TagString: Enemy
@@ -1316,6 +1356,21 @@ MonoBehaviour:
   movementStatData: {fileID: 11400000, guid: b6d0d0fb23818494e94c0519d63a1db2, type: 2}
   use8DirectionSnap: 1
   MoveSpeedMultiplier: 1
+--- !u!114 &1532098329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1532098314}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1301395d78116774cb81f4784cf29018, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyBrain
+  attackData: {fileID: 11400000, guid: d0d9e1f2a3b4c5d6e7f8091a2b3c4d5e, type: 2}
+  attackInterval: 3
+  faceTarget: {fileID: 362135765}
 --- !u!1 &1850219730
 GameObject:
   m_ObjectHideFlags: 0

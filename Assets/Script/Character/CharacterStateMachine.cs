@@ -12,11 +12,14 @@ public enum CharacterState
     Airborne,  // 강한 피격 — 넉백으로 공중에 뜸
 
     // --- 고정(sticky): 명시적 호출/애니메이션 이벤트로만 빠져나간다 ---
-    JumpStart, // 점프 준비. OnJumpLaunchFrame에서 탈출
-    JumpLand,  // 착지 경직. OnJumpLandEndFrame에서 탈출
-    Attack,    // 공격 재생. Fighter의 타이머로 스스로 탈출 (워치독 대상 아님)
-    Landed,    // 넉백으로 쓰러짐. OnKnockdownGetUpStartFrame에서 탈출
-    GetUp,     // 일어나는 중. OnKnockdownGetUpEndFrame에서 탈출
+    JumpStart,    // 점프 준비. OnJumpLaunchFrame에서 탈출
+    JumpLand,     // 착지 경직. OnJumpLandEndFrame에서 탈출
+    Attack,       // 공격 재생. Fighter의 타이머로 스스로 탈출 (워치독 대상 아님)
+    Dodge,        // 회피(대시). Dodger의 타이머로 스스로 탈출 (워치독 대상 아님)
+    Parry,        // 반격자세. Parrier의 타이머로 스스로 탈출 (워치독 대상 아님)
+    ParrySuccess, // 패링 성공 연출. Parrier의 타이머로 스스로 탈출 (워치독 대상 아님)
+    Landed,       // 넉백으로 쓰러짐. OnKnockdownGetUpStartFrame에서 탈출
+    GetUp,        // 일어나는 중. OnKnockdownGetUpEndFrame에서 탈출
 }
 
 /// <summary>
@@ -57,6 +60,9 @@ public class CharacterStateMachine : MonoBehaviour
     public bool IsMovementLocked =>
         CurrentState == CharacterState.JumpStart ||
         CurrentState == CharacterState.JumpLand ||
+        CurrentState == CharacterState.Dodge ||
+        CurrentState == CharacterState.Parry ||
+        CurrentState == CharacterState.ParrySuccess ||
         CurrentState == CharacterState.Landed ||
         CurrentState == CharacterState.GetUp ||
         CurrentState == CharacterState.Stun ||
@@ -73,7 +79,9 @@ public class CharacterStateMachine : MonoBehaviour
 
     static bool IsSticky(CharacterState s) =>
         s == CharacterState.JumpStart || s == CharacterState.JumpLand ||
-        s == CharacterState.Attack || s == CharacterState.Landed || s == CharacterState.GetUp;
+        s == CharacterState.Attack || s == CharacterState.Dodge ||
+        s == CharacterState.Parry || s == CharacterState.ParrySuccess ||
+        s == CharacterState.Landed || s == CharacterState.GetUp;
 
     void Awake()
     {
@@ -107,6 +115,29 @@ public class CharacterStateMachine : MonoBehaviour
     public void EnterJumpStart() => SetState(CharacterState.JumpStart);
     public void EnterJumpLand() => SetState(CharacterState.JumpLand);
     public void EnterLanded() => SetState(CharacterState.Landed);
+
+    /// <summary>Dodger가 회피를 시작할 때 호출. 상태는 Dodge, 애니메이션은 "Dodge" State로 CrossFade.</summary>
+    public void EnterDodge() => SetState(CharacterState.Dodge);
+
+    /// <summary>Dodger가 회피 타이머를 소진했을 때 호출. 지금이 Dodge면 물리 파생 상태로 되돌린다.</summary>
+    public void ExitDodge()
+    {
+        if (CurrentState == CharacterState.Dodge)
+            SetState(DerivePhysicsState());
+    }
+
+    /// <summary>Parrier가 반격자세를 시작할 때 호출.</summary>
+    public void EnterParry() => SetState(CharacterState.Parry);
+
+    /// <summary>Parrier가 패링에 성공한 순간 호출. Parry → ParrySuccess.</summary>
+    public void EnterParrySuccess() => SetState(CharacterState.ParrySuccess);
+
+    /// <summary>Parrier가 반격자세/성공 연출 타이머를 소진했을 때 호출. 지금이 Parry/ParrySuccess면 물리 파생 상태로.</summary>
+    public void ExitParry()
+    {
+        if (CurrentState == CharacterState.Parry || CurrentState == CharacterState.ParrySuccess)
+            SetState(DerivePhysicsState());
+    }
 
     /// <summary>
     /// 피격 시 Health가 호출. 지금이 어떤 고정 상태든 상관없이 즉시 물리 파생 상태로 되돌린다.
@@ -206,8 +237,12 @@ public class CharacterStateMachine : MonoBehaviour
 
     void TickWatchdog()
     {
-        // Attack은 Fighter 타이머로 자력 종료하므로 감시 대상이 아니다.
-        if (!IsSticky(CurrentState) || CurrentState == CharacterState.Attack)
+        // Attack / Dodge / Parry / ParrySuccess는 각자의 타이머(Fighter / Dodger / Parrier)로 자력 종료하므로 감시 대상이 아니다.
+        if (!IsSticky(CurrentState)
+            || CurrentState == CharacterState.Attack
+            || CurrentState == CharacterState.Dodge
+            || CurrentState == CharacterState.Parry
+            || CurrentState == CharacterState.ParrySuccess)
         {
             stickyElapsed = 0f;
             return;

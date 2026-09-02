@@ -18,6 +18,8 @@ public class Actor : MonoBehaviour
     Locomotion locomotion;
     Fighter fighter;
     CharacterStateMachine stateMachine;
+    Dodger dodger;
+    Parrier parrier;
     IIntentSource intentSource;
 
     void Awake()
@@ -25,6 +27,8 @@ public class Actor : MonoBehaviour
         locomotion = GetComponent<Locomotion>();
         fighter = GetComponent<Fighter>();
         stateMachine = GetComponent<CharacterStateMachine>();
+        dodger = GetComponent<Dodger>();   // 회피는 플레이어만 가짐. 없어도 됨(훈련 더미·적)
+        parrier = GetComponent<Parrier>(); // 패링도 플레이어만. 없어도 됨
         intentSource = GetComponent<IIntentSource>();
     }
 
@@ -37,6 +41,13 @@ public class Actor : MonoBehaviour
         // "→ + X"를 한 프레임에 눌렀을 때 공격이 그 방향으로 나가야 하므로.
         bool facingLocked = stateMachine.IsMovementLocked || !fighter.MovementAllowed;
         locomotion.SetFacing(facingLocked ? Vector3.zero : intent.FacingDirection);
+
+        // 방어(회피·패링)는 공격보다 먼저 — 같은 프레임에 같이 눌렸으면 방어가 우선.
+        if (intent.WantsDodge && dodger != null)
+            dodger.TryDodge();
+
+        if (intent.WantsParry && parrier != null)
+            parrier.TryParry();
 
         if (intent.AttackToStart != null)
             fighter.TryAttack(intent.AttackToStart); // 방금 정한 방향으로 공격이 나간다
@@ -66,6 +77,10 @@ public class Actor : MonoBehaviour
             stateMachine.EnterLanded();
 
         fighter.Tick(dt);
+        if (dodger != null)
+            dodger.Tick(dt);
+        if (parrier != null)
+            parrier.Tick(dt);
         stateMachine.Evaluate();
     }
 }

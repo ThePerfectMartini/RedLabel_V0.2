@@ -27,6 +27,12 @@ public struct CharacterIntent
     /// <summary>이번 프레임에 점프하고 싶은지.</summary>
     public bool WantsJump;
 
+    /// <summary>이번 프레임에 회피(대시)하고 싶은지.</summary>
+    public bool WantsDodge;
+
+    /// <summary>이번 프레임에 패링(반격자세)하고 싶은지.</summary>
+    public bool WantsParry;
+
     /// <summary>아무것도 하지 않는 의도. IIntentSource가 없거나 입력이 없을 때 쓴다.</summary>
     public static CharacterIntent None => default;
 }
