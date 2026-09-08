@@ -20,6 +20,7 @@ public enum CharacterState
     ParrySuccess, // 패링 성공 연출. Parrier의 타이머로 스스로 탈출 (워치독 대상 아님)
     Landed,       // 넉백으로 쓰러짐. OnKnockdownGetUpStartFrame에서 탈출
     GetUp,        // 일어나는 중. OnKnockdownGetUpEndFrame에서 탈출
+    Dead,         // 사망. 되돌아 나올 수 없는 종착 상태 (워치독 대상 아님, 탈출 메서드 없음)
 }
 
 /// <summary>
@@ -28,7 +29,8 @@ public enum CharacterState
 /// 매 프레임 "phase → 같은 이름 state"로 옮겨적었는데, 그 번역 사다리를 없앤 것이 이 통합의 핵심이다.
 ///
 /// 애니메이션 이벤트로만 끝나는 고정 상태(JumpStart/JumpLand/Landed/GetUp)는 이벤트가 빠지면 캐릭터가
-/// 영구히 잠기므로 워치독으로 강제 해제한다. Attack은 Fighter의 타이머로 자력 종료하므로 제외.
+/// 영구히 잠기므로 워치독으로 강제 해제한다. Attack/Dodge/Parry/ParrySuccess는 각자 타이머로, Dead는
+/// 종착 상태라 워치독에서 제외.
 ///
 /// [준비물] 자식(또는 자신)에 Animator + SpriteRenderer. Animator State 이름은 CharacterState 값 및
 ///          각 공격 클립 이름과 정확히 일치해야 한다. State 사이 Transition 화살표는 필요 없다(전부 코드로 CrossFade).
@@ -66,7 +68,18 @@ public class CharacterStateMachine : MonoBehaviour
         CurrentState == CharacterState.Landed ||
         CurrentState == CharacterState.GetUp ||
         CurrentState == CharacterState.Stun ||
-        CurrentState == CharacterState.Airborne;
+        CurrentState == CharacterState.Airborne ||
+        CurrentState == CharacterState.Dead;
+
+    /// <summary>
+    /// 피격 여파로 행동 불능인 상태인지 — Stun / Airborne / Landed / GetUp.
+    /// AI가 "지금 얻어맞는 중, 벗어나면 즉시 재판단"을 아는 창구.
+    /// </summary>
+    public bool IsHitStunned =>
+        CurrentState == CharacterState.Stun ||
+        CurrentState == CharacterState.Airborne ||
+        CurrentState == CharacterState.Landed ||
+        CurrentState == CharacterState.GetUp;
 
     Locomotion locomotion;
     Animator animator;
@@ -81,7 +94,8 @@ public class CharacterStateMachine : MonoBehaviour
         s == CharacterState.JumpStart || s == CharacterState.JumpLand ||
         s == CharacterState.Attack || s == CharacterState.Dodge ||
         s == CharacterState.Parry || s == CharacterState.ParrySuccess ||
-        s == CharacterState.Landed || s == CharacterState.GetUp;
+        s == CharacterState.Landed || s == CharacterState.GetUp ||
+        s == CharacterState.Dead;
 
     void Awake()
     {
@@ -144,7 +158,24 @@ public class CharacterStateMachine : MonoBehaviour
     /// <b>어떤 상태였는지 분기하지 않는 것이 핵심</b> — 예전엔 피격 쪽이 플래그를 하나씩 껐고 하나라도
     /// 빠뜨리면 그 동작의 Animation Event가 영영 안 와서 이동이 영구히 잠겼다.
     /// </summary>
-    public void Interrupt() => SetState(DerivePhysicsState());
+    public void Interrupt()
+    {
+        if (CurrentState == CharacterState.Dead) return; // 종착 상태 — 어떤 피격도 여기서 되살리지 않는다
+        SetState(DerivePhysicsState());
+    }
+
+    /// <summary>
+    /// Health가 사망 순간 호출. 되돌아 나올 수 없는 <b>종착 상태</b>다 — Evaluate / 워치독 / Interrupt
+    /// 어느 것도 여기서 빼내지 않는다. 몸을 멈추는 건 Actor가, 오브젝트 소멸(적)은 EnemyDespawn이 맡는다.
+    /// </summary>
+    public void EnterDead()
+    {
+        SetState(CharacterState.Dead);
+        // 전용 Dead 클립이 아직 없으면 넉다운(Landed) 포즈를 재사용한다. Animator에 "Dead" State를 추가하면 자동으로 그쪽을 쓴다.
+        string dead = nameof(CharacterState.Dead);
+        bool hasDeadState = animator != null && animator.HasState(0, Animator.StringToHash(dead));
+        CrossFade(hasDeadState ? dead : nameof(CharacterState.Landed));
+    }
 
     // 애니메이션 이벤트(AnimationEventRelay 경유). 엉뚱한 이벤트가 무관한 동작을 망가뜨리지 않게 상태를 가드한다.
 
@@ -203,8 +234,8 @@ public class CharacterStateMachine : MonoBehaviour
         CurrentState = next;
         stickyElapsed = 0f;
 
-        // Attack은 EnterAttack이 클립 이름으로 직접 CrossFade한다(콤보 단계별로 클립이 다르므로).
-        if (next != CharacterState.Attack)
+        // Attack / Dead는 각자의 Enter*가 클립을 직접 CrossFade한다(Attack은 콤보 단계별로, Dead는 폴백 처리).
+        if (next != CharacterState.Attack && next != CharacterState.Dead)
             CrossFade(next.ToString());
     }
 
@@ -237,12 +268,14 @@ public class CharacterStateMachine : MonoBehaviour
 
     void TickWatchdog()
     {
-        // Attack / Dodge / Parry / ParrySuccess는 각자의 타이머(Fighter / Dodger / Parrier)로 자력 종료하므로 감시 대상이 아니다.
+        // Attack / Dodge / Parry / ParrySuccess는 각자의 타이머(Fighter / Dodger / Parrier)로 자력 종료하므로,
+        // Dead는 애초에 끝나지 않는 종착 상태이므로 감시 대상이 아니다.
         if (!IsSticky(CurrentState)
             || CurrentState == CharacterState.Attack
             || CurrentState == CharacterState.Dodge
             || CurrentState == CharacterState.Parry
-            || CurrentState == CharacterState.ParrySuccess)
+            || CurrentState == CharacterState.ParrySuccess
+            || CurrentState == CharacterState.Dead)
         {
             stickyElapsed = 0f;
             return;

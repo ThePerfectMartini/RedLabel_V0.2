@@ -35,6 +35,15 @@ public class Actor : MonoBehaviour
     void Update()
     {
         float dt = Time.deltaTime;
+
+        // 죽으면 판단·공격·이동 입력을 전부 멈춘다. 넉백으로 뜬 채 죽었으면 바닥에 닿을 때까지 물리만 굴린다.
+        if (stateMachine.CurrentState == CharacterState.Dead)
+        {
+            if (!locomotion.IsGrounded)
+                locomotion.Tick(dt);
+            return;
+        }
+
         CharacterIntent intent = intentSource != null ? intentSource.GetIntent(dt) : CharacterIntent.None;
 
         // 바라보는 방향은 이번 프레임의 공격이 시작되기 <b>전</b> 잠금 상태로 판단한다 —

@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="DoitMySelf — 캐릭터 오브젝트가 한 프레임 동안 어떻게 움직이고 때리고 맞는지, 그림으로 쉽게 설명한 문서.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>">
+<title>오브젝트 관리 · 그림 설명</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --ground:#F7F8FA; --surface:#FFFFFF; --surface-2:#EFF1F5; --surface-3:#E5E8EF;
+  --line:#DCE0E8; --line-strong:#C3C9D6;
+  --ink:#171C27; --ink-2:#4C5568; --ink-3:#5F6A80;
+  --accent:#9C6210; --accent-hi:#B4720F; --accent-soft:#FAEFDC;
+  --good:#2A8078; --good-bg:#DEF0EE;
+  --warn:#A63F37; --warn-bg:#FBE7E5;
+  --shadow:0 1px 2px rgba(23,28,39,.05), 0 8px 24px -12px rgba(23,28,39,.12);
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --sans:"IBM Plex Sans KR",-apple-system,"Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#12151C; --surface:#181C25; --surface-2:#1F242F; --surface-3:#262C39;
+    --line:#2A3040; --line-strong:#3B4356;
+    --ink:#E7EAF1; --ink-2:#B6BFCE; --ink-3:#838EA2;
+    --accent:#E8A33D; --accent-hi:#F0B45C; --accent-soft:#2B2318;
+    --good:#54B4AC; --good-bg:#152E2C;
+    --warn:#E27B72; --warn-bg:#33201E;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#12151C; --surface:#181C25; --surface-2:#1F242F; --surface-3:#262C39;
+  --line:#2A3040; --line-strong:#3B4356;
+  --ink:#E7EAF1; --ink-2:#B6BFCE; --ink-3:#838EA2;
+  --accent:#E8A33D; --accent-hi:#F0B45C; --accent-soft:#2B2318;
+  --good:#54B4AC; --good-bg:#152E2C;
+  --warn:#E27B72; --warn-bg:#33201E;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box;}
+body{margin:0; background:var(--ground); color:var(--ink); font-family:var(--sans);
+     font-size:15.5px; line-height:1.68; -webkit-font-smoothing:antialiased;}
+:focus-visible{outline:2px solid var(--accent-hi); outline-offset:2px; border-radius:3px;}
+code{font-family:var(--mono); font-size:.88em; background:var(--surface-2);
+     padding:1px 5px; border-radius:4px; border:1px solid var(--line);}
+b{font-weight:600; color:var(--ink);}
+
+.app{display:grid; grid-template-columns:250px minmax(0,1fr); min-height:100vh;}
+.rail{border-right:1px solid var(--line); background:var(--surface);
+      position:sticky; top:0; height:100vh; overflow-y:auto;}
+.rail-head{padding:24px 22px 16px; border-bottom:1px solid var(--line);}
+.rail-title{font-family:var(--mono); font-size:14px; font-weight:600; margin:0;}
+.rail-sub{font-size:11.5px; color:var(--ink-3); margin-top:6px; line-height:1.5;}
+.rail-nav{padding:14px 12px 30px;}
+.rail-nav a{display:flex; gap:10px; padding:7px 10px; border-radius:6px; text-decoration:none;
+            font-size:13.5px; color:var(--ink-2); border-left:2px solid transparent;
+            transition:background .12s,color .12s;}
+.rail-nav a:hover{background:var(--surface-2); color:var(--ink);}
+.rail-nav a.on{background:var(--accent-soft); color:var(--accent); font-weight:600; border-left-color:var(--accent);}
+.nav-n{font-family:var(--mono); font-size:11px; color:var(--ink-3); min-width:15px; font-variant-numeric:tabular-nums;}
+.rail-nav a.on .nav-n{color:var(--accent);}
+
+main{min-width:0;}
+.doc{padding:0 44px 140px; max-width:940px;}
+
+.hero{padding:56px 0 38px; border-bottom:1px solid var(--line);}
+.hero h1{margin:0; font-size:clamp(30px,4.2vw,42px); font-weight:700; letter-spacing:-.03em; line-height:1.15;}
+.hero .lede{margin:15px 0 0; font-size:16.5px; color:var(--ink-2); max-width:62ch;}
+
+section{padding-top:56px; scroll-margin-top:24px;}
+.sec-head{display:flex; align-items:baseline; gap:13px; margin-bottom:8px;}
+.sec-n{font-family:var(--mono); font-size:12px; font-weight:600; color:var(--accent); font-variant-numeric:tabular-nums;}
+h2{margin:0; font-size:24px; font-weight:700; letter-spacing:-.022em;}
+.sec-note{color:var(--ink-2); font-size:15px; margin:8px 0 22px; max-width:70ch;}
+h3{margin:34px 0 10px; font-size:16.5px; font-weight:600;}
+p{margin:0 0 13px;}
+ul{margin:10px 0 14px; padding-left:20px;} li{margin:5px 0;}
+
+.figure{background:var(--surface); border:1px solid var(--line); border-radius:12px;
+        box-shadow:var(--shadow); padding:20px 16px 13px; margin:20px 0; overflow-x:auto;}
+.figure svg{display:block; margin:0 auto; min-width:540px; height:auto;}
+.figcap{font-size:12.5px; color:var(--ink-3); text-align:center; margin-top:12px;
+        padding-top:12px; border-top:1px solid var(--line); max-width:64ch; margin-left:auto; margin-right:auto;}
+
+.note,.warn,.tip{border-radius:9px; padding:13px 17px; font-size:14.5px; margin:16px 0; border:1px solid;}
+.note{background:var(--accent-soft); border-color:color-mix(in srgb,var(--accent) 26%,transparent); color:var(--ink-2);}
+.warn{background:var(--warn-bg); border-color:color-mix(in srgb,var(--warn) 32%,transparent); color:var(--ink-2);}
+.tip{background:var(--good-bg); border-color:color-mix(in srgb,var(--good) 30%,transparent); color:var(--ink-2);}
+.note b,.warn b,.tip b{color:var(--ink);}
+.note .lbl,.warn .lbl,.tip .lbl{font-family:var(--mono); font-size:10.5px; letter-spacing:.09em;
+  text-transform:uppercase; display:block; margin-bottom:4px;}
+.note .lbl{color:var(--accent);} .warn .lbl{color:var(--warn);} .tip .lbl{color:var(--good);}
+
+.tw{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface);
+    box-shadow:var(--shadow); margin:16px 0;}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:440px;}
+th{text-align:left; font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.08em;
+   text-transform:uppercase; color:var(--ink-3); padding:11px 16px; border-bottom:1px solid var(--line);
+   background:var(--surface-2); white-space:nowrap;}
+td{padding:10px 16px; border-bottom:1px solid var(--line); color:var(--ink-2); vertical-align:top; line-height:1.6;}
+tbody tr:last-child td{border-bottom:none;}
+td:first-child{color:var(--ink);}
+td.mono{font-family:var(--mono); font-size:12.5px;}
+
+.analogy{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:20px 0;}
+.acard{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px 16px; box-shadow:var(--shadow);}
+.acard .role{font-size:13px; color:var(--accent); font-weight:600; margin-bottom:2px;}
+.acard .name{font-family:var(--mono); font-size:12.5px; color:var(--ink-3); margin-bottom:7px;}
+.acard .desc{font-size:13.5px; color:var(--ink-2);}
+
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;}
+  .rail{position:static; height:auto; border-right:none; border-bottom:1px solid var(--line);}
+  .rail-nav{display:none;}
+  .doc{padding-left:20px; padding-right:20px;}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+
+/* ── SVG 공용 ── */
+svg .card{fill:var(--surface-2); stroke:var(--line-strong); stroke-width:1.3;}
+svg .card-a{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.7;}
+svg .card-g{fill:var(--good-bg); stroke:var(--good); stroke-width:1.5;}
+svg .card-w{fill:var(--warn-bg); stroke:var(--warn); stroke-width:1.5;}
+svg .card-d{fill:none; stroke:var(--line-strong); stroke-width:1.3; stroke-dasharray:5 4;}
+svg .t{font-family:var(--sans); font-size:13px; font-weight:600; fill:var(--ink); text-anchor:middle;}
+svg .t-a{fill:var(--accent);}
+svg .t-g{fill:var(--good);}
+svg .t-w{fill:var(--warn);}
+svg .s{font-family:var(--sans); font-size:10.5px; fill:var(--ink-3); text-anchor:middle;}
+svg .m{font-family:var(--mono); font-size:10px; fill:var(--ink-3); text-anchor:middle;}
+svg .lb{font-family:var(--sans); font-size:11px; fill:var(--ink-2); text-anchor:middle;}
+svg .flow{stroke:var(--accent); stroke-width:1.8; fill:none;}
+svg .flow-w{stroke:var(--warn); stroke-width:1.6; fill:none;}
+svg .flow-g{stroke:var(--good); stroke-width:1.6; fill:none;}
+svg .flow-d{stroke:var(--line-strong); stroke-width:1.5; fill:none; stroke-dasharray:5 4;}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="rail">
+  <div class="rail-head">
+    <p class="rail-title">오브젝트 관리 · 그림 설명</p>
+    <div class="rail-sub">캐릭터가 한 프레임에 어떻게<br>움직이고 때리고 맞는가</div>
+  </div>
+  <nav class="rail-nav" id="nav">
+    <a href="#s1"><span class="nav-n">01</span>캐릭터 = 부품 조립</a>
+    <a href="#s2"><span class="nav-n">02</span>한 프레임에 벌어지는 일</a>
+    <a href="#s3"><span class="nav-n">03</span>이동</a>
+    <a href="#s4"><span class="nav-n">04</span>공격</a>
+    <a href="#s5"><span class="nav-n">05</span>피격</a>
+    <a href="#s6"><span class="nav-n">06</span>방어 (회피·패링)</a>
+    <a href="#s7"><span class="nav-n">07</span>상태</a>
+    <a href="#s8"><span class="nav-n">08</span>애니메이션 다리</a>
+    <a href="#s9"><span class="nav-n">09</span>기억할 규칙</a>
+  </nav>
+</aside>
+
+<main><div class="doc">
+
+<div class="hero">
+  <h1>오브젝트가 어떻게 관리되는가</h1>
+  <p class="lede">그림 위주로 쉽게. 캐릭터 한 명이 매 프레임 어떤 순서로, 어떤 부품을 거쳐 동작하는지만 봅니다.
+  함수 시그니처는 <code>프로젝트-사전.md</code>, 만드는 법은 <code>프로젝트-설명서.html</code>, 짧은 글 버전은 <code>오브젝트-관리-정리.md</code>에 있습니다.</p>
+</div>
+
+<!-- ══════════ 01 ══════════ -->
+<section id="s1">
+  <div class="sec-head"><span class="sec-n">01</span><h2>캐릭터 = 부품 조립</h2></div>
+  <p class="sec-note">캐릭터는 <b>하나의 큰 스크립트가 아니라, 역할이 나뉜 작은 부품 여러 개</b>입니다.
+  가장 중요한 규칙: <b>"뭘 할지 정하는 쪽"과 "실제로 하는 몸"이 완전히 갈라져 있습니다.</b></p>
+
+  <div class="figure">
+    <svg viewBox="0 0 760 430" role="img" aria-label="캐릭터를 이루는 부품들">
+      <defs><marker id="k1" markerWidth="9" markerHeight="9" refX="7.5" refY="3.2" orient="auto">
+        <path d="M0,0 L7.5,3.2 L0,6.4 z" fill="var(--accent)"/></marker></defs>
+
+      <rect class="card" x="18" y="150" width="150" height="82" rx="9"/>
+      <text class="t" x="93" y="182">조종하는 사람</text>
+      <text class="s" x="93" y="200">PlayerInput / EnemyBrain</text>
+      <text class="s" x="93" y="214">"오른쪽! 공격!" 말만 함</text>
+
+      <rect class="card-a" x="238" y="150" width="150" height="82" rx="9"/>
+      <text class="t t-a" x="313" y="182">Actor · 지휘자</text>
+      <text class="s" x="313" y="200">순서만 정함</text>
+      <text class="s" x="313" y="214">자기는 계산 안 함</text>
+
+      <path class="flow" d="M168,191 L234,191" marker-end="url(#k1)"/>
+      <text class="lb" x="201" y="181">뭘 하고 싶은지</text>
+
+      <rect class="card" x="470" y="14" width="272" height="60" rx="9"/>
+      <text class="t" x="606" y="39">다리 · Locomotion</text>
+      <text class="s" x="606" y="57">이동 · 중력 · 점프 · 넉백 · 벽 충돌</text>
+
+      <rect class="card" x="470" y="90" width="272" height="60" rx="9"/>
+      <text class="t" x="606" y="115">팔 · Fighter</text>
+      <text class="s" x="606" y="133">공격 실행 · "누가 맞았나" 판정</text>
+
+      <rect class="card" x="470" y="166" width="272" height="60" rx="9"/>
+      <text class="t" x="606" y="191">체력 · Health</text>
+      <text class="s" x="606" y="209">피 깎기 · 하던 동작 무조건 끊기</text>
+
+      <rect class="card" x="470" y="242" width="272" height="60" rx="9"/>
+      <text class="t" x="606" y="267">상태+얼굴 · CharacterStateMachine</text>
+      <text class="s" x="606" y="285">지금 뭐 하는 중 + 그에 맞는 애니메이션</text>
+
+      <path class="flow" d="M389,178 C430,150 435,60 466,44" marker-end="url(#k1)"/>
+      <path class="flow" d="M389,185 C430,165 440,130 466,120" marker-end="url(#k1)"/>
+      <path class="flow" d="M389,197 C430,205 440,190 466,196" marker-end="url(#k1)"/>
+      <path class="flow" d="M389,204 C430,240 435,260 466,272" marker-end="url(#k1)"/>
+
+      <rect class="card-d" x="238" y="330" width="272" height="58" rx="9"/>
+      <text class="t" x="374" y="354">회피 Dodger · 패링 Parrier</text>
+      <text class="s" x="374" y="372">플레이어만 · 없으면 그냥 건너뜀</text>
+      <path class="flow-d" d="M313,234 L360,326" marker-end="url(#k1)"/>
+    </svg>
+    <p class="figcap">조종하는 사람은 <b>말만</b> 하고, Actor가 순서를 정하고, 다리·팔·체력·상태가 실행한다.
+    플레이어든 적이든 <b>몸(오른쪽 4개)은 똑같고</b>, 왼쪽 "조종하는 사람"만 바뀐다.</p>
+  </div>
+
+  <div class="analogy">
+    <div class="acard"><div class="role">조종하는 사람</div><div class="name">PlayerInput / EnemyBrain</div><div class="desc">키보드나 AI가 "이번 프레임에 뭘 하고 싶다"를 값 하나로 넘김. 직접 안 움직임.</div></div>
+    <div class="acard"><div class="role">지휘자</div><div class="name">Actor</div><div class="desc">유일하게 <code>Update()</code>를 가짐. "너 먼저, 그다음 너" 순서를 한 곳에 고정.</div></div>
+    <div class="acard"><div class="role">다리</div><div class="name">Locomotion</div><div class="desc">위치를 실제로 옮김. 아무도 얘한테 뭘 물어보지 않는 종점.</div></div>
+    <div class="acard"><div class="role">팔</div><div class="name">Fighter</div><div class="desc">공격을 실행하고 정해진 순간에 범위 안의 상대를 검사.</div></div>
+    <div class="acard"><div class="role">체력</div><div class="name">Health</div><div class="desc">맞으면 피 깎고, 하던 동작을 조건 없이 끊음.</div></div>
+    <div class="acard"><div class="role">상태 + 얼굴</div><div class="name">CharacterStateMachine</div><div class="desc">"지금 뭐 하는 중"을 하나로 관리하고 그에 맞는 애니메이션을 틀어줌.</div></div>
+  </div>
+
+  <div class="tip"><span class="lbl">여기가 핵심</span>
+    "조종하는 사람"이 없으면 Actor는 <b>"아무것도 안 함"</b>으로 돌아갑니다. 그게 지금 씬의 <b>훈련용 허수아비</b>예요 —
+    가만히 서 있다가 맞으면 넉백·경직·쓰러짐·기상까지 정상으로 합니다.
+  </div>
+</section>
+
+<!-- ══════════ 02 ══════════ -->
+<section id="s2">
+  <div class="sec-head"><span class="sec-n">02</span><h2>한 프레임에 벌어지는 일</h2></div>
+  <p class="sec-note">Actor는 매 프레임 아래 순서를 <b>항상 똑같이</b> 밟습니다. 순서 자체가 규칙이에요.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 820 350" role="img" aria-label="한 프레임의 처리 순서">
+      <defs><marker id="k2" markerWidth="9" markerHeight="9" refX="7.5" refY="3.2" orient="auto">
+        <path d="M0,0 L7.5,3.2 L0,6.4 z" fill="var(--accent)"/></marker></defs>
+
+      <rect class="card-a" x="16" y="26" width="150" height="52" rx="8"/>
+      <text class="t t-a" x="91" y="49">① 물어보기</text><text class="s" x="91" y="66">"뭐 할래?"</text>
+
+      <rect class="card" x="206" y="26" width="164" height="52" rx="8"/>
+      <text class="t" x="288" y="49">② 방향 정하기</text><text class="s" x="288" y="66">공격 시작 전에!</text>
+
+      <rect class="card" x="410" y="26" width="164" height="52" rx="8"/>
+      <text class="t" x="492" y="49">③ 방어 먼저</text><text class="s" x="492" y="66">회피 · 패링</text>
+
+      <rect class="card" x="614" y="26" width="164" height="52" rx="8"/>
+      <text class="t" x="696" y="49">④ 공격</text><text class="s" x="696" y="66">방금 정한 방향으로</text>
+
+      <path class="flow" d="M166,52 L202,52" marker-end="url(#k2)"/>
+      <path class="flow" d="M370,52 L406,52" marker-end="url(#k2)"/>
+      <path class="flow" d="M574,52 L610,52" marker-end="url(#k2)"/>
+      <path class="flow" d="M696,78 C696,110 696,110 696,132" marker-end="url(#k2)"/>
+
+      <rect class="card" x="614" y="136" width="164" height="52" rx="8"/>
+      <text class="t" x="696" y="159">⑤ 점프</text><text class="s" x="696" y="176">준비만 (아직 안 뜸)</text>
+
+      <rect class="card" x="410" y="136" width="164" height="52" rx="8"/>
+      <text class="t" x="492" y="159">⑥ 이동</text><text class="s" x="492" y="176">공격·점프 반영 후!</text>
+
+      <rect class="card" x="206" y="136" width="164" height="52" rx="8"/>
+      <text class="t" x="288" y="159">⑦ 실행 · Tick</text><text class="s" x="288" y="176">위치를 여기서 확정</text>
+
+      <rect class="card-a" x="16" y="136" width="150" height="52" rx="8"/>
+      <text class="t t-a" x="91" y="159">⑧ 마무리</text><text class="s" x="91" y="176">상태 다시 판정</text>
+
+      <path class="flow" d="M614,162 L578,162" marker-end="url(#k2)"/>
+      <path class="flow" d="M410,162 L374,162" marker-end="url(#k2)"/>
+      <path class="flow" d="M206,162 L170,162" marker-end="url(#k2)"/>
+
+      <rect class="card-w" x="206" y="236" width="404" height="72" rx="9"/>
+      <text class="t t-w" x="408" y="266">방향은 공격 <tspan font-style="italic">전</tspan>, 이동은 공격 <tspan font-style="italic">후</tspan></text>
+      <text class="s" x="408" y="288">"→ 와 X를 같은 프레임에 눌러도 오른쪽으로 공격"이 이 순서에서 나온다</text>
+    </svg>
+    <p class="figcap">각 몸 부품은 자기 <code>Update()</code>가 없습니다. Actor가 불러줄 때만 움직여요 —
+    그래서 "누가 먼저 실행됐나" 때문에 생기는 버그가 구조적으로 안 생깁니다.</p>
+  </div>
+
+  <table class="tw" style="display:table"><tbody>
+    <tr><td class="mono" style="width:70px">② 방향</td><td>공격이 시작되기 <b>전</b> 상태로 좌우를 정한다. 그래야 그 방향으로 공격이 나감.</td></tr>
+    <tr><td class="mono">③ 방어</td><td>같은 프레임에 방어와 공격이 같이 눌리면 <b>방어가 이긴다.</b></td></tr>
+    <tr><td class="mono">⑤ 점프</td><td>여기선 "뜰 준비"만. 실제로 뜨는 건 점프 준비 애니메이션이 "발 뗐다"고 알릴 때(08번).</td></tr>
+    <tr><td class="mono">⑥ 이동</td><td>이번 프레임에 시작된 공격·점프까지 계산에 넣고 이동 잠금을 판정.</td></tr>
+    <tr><td class="mono">⑦ Tick</td><td>이 프레임의 모든 입력이 <b>여기서 한 번에</b> 위치로 반영된다.</td></tr>
+  </tbody></table>
+</section>
+
+<!-- ══════════ 03 ══════════ -->
+<section id="s3">
+  <div class="sec-head"><span class="sec-n">03</span><h2>이동</h2></div>
+  <p class="sec-note">캐릭터의 <b>모든 위치 이동</b>은 <code>Locomotion</code> 하나를 거칩니다. Rigidbody를 안 쓰고
+  중력·점프·넉백·벽 충돌을 전부 손으로 계산해서 위치에 직접 넣어요.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 800 330" role="img" aria-label="이동의 세 갈래가 한 속도로 모임">
+      <defs><marker id="k3" markerWidth="9" markerHeight="9" refX="7.5" refY="3.2" orient="auto">
+        <path d="M0,0 L7.5,3.2 L0,6.4 z" fill="var(--accent)"/></marker></defs>
+
+      <rect class="card" x="14" y="20" width="230" height="66" rx="9"/>
+      <text class="t" x="129" y="46">① 직접 입력 이동</text>
+      <text class="s" x="129" y="66">WASD · 적 추격 · 8방향 스냅</text>
+
+      <rect class="card" x="14" y="128" width="230" height="66" rx="9"/>
+      <text class="t" x="129" y="154">② 동작에 딸린 이동</text>
+      <text class="s" x="129" y="174">점프 · 돌진 공격 · 회피 대시</text>
+
+      <rect class="card" x="14" y="236" width="230" height="66" rx="9"/>
+      <text class="t" x="129" y="262">③ 밀리는 이동</text>
+      <text class="s" x="129" y="282">넉백 · 패링당한 스턴</text>
+
+      <rect class="card-a" x="340" y="118" width="150" height="86" rx="10"/>
+      <text class="t t-a" x="415" y="152">속도 한 곳</text>
+      <text class="s" x="415" y="170">velocity</text>
+      <text class="s" x="415" y="186">세 갈래가 다 여기로</text>
+
+      <path class="flow" d="M244,53 C290,60 300,120 336,140" marker-end="url(#k3)"/>
+      <path class="flow" d="M244,161 L336,161" marker-end="url(#k3)"/>
+      <path class="flow" d="M244,269 C290,262 300,202 336,182" marker-end="url(#k3)"/>
+
+      <rect class="card" x="560" y="108" width="226" height="106" rx="10"/>
+      <text class="t" x="673" y="136">Tick — 한 프레임에 한 번</text>
+      <text class="s" x="673" y="158">감속 → 중력 → 위치 적분</text>
+      <text class="s" x="673" y="176">→ 바닥·벽 충돌·바운스</text>
+      <text class="s" x="673" y="194">→ 맵 경계 밖으로 못 나가게</text>
+
+      <path class="flow" d="M490,161 L556,161" marker-end="url(#k3)"/>
+    </svg>
+    <p class="figcap">어떤 이유로 움직이든 전부 같은 속도값 하나에 모이고, 프레임 끝의 <code>Tick</code>이 한 번에 확정한다.</p>
+  </div>
+
+  <h3>공중에 뜬 "이유"를 하나로 관리</h3>
+  <p>공중에 들어가는 문은 딱 둘 — <b>점프</b> 아니면 <b>넉백</b>. 그래서 "왜 떠 있나"는 항상 셋 중 하나로 정해집니다.</p>
+  <table class="tw" style="display:table"><tbody>
+    <tr><td class="mono" style="width:110px">None</td><td>지상 (또는 그냥 떨어지는 중)</td></tr>
+    <tr><td class="mono">Jump</td><td>점프로 떴다 → 바운스 안 함, 착지하면 착지 경직</td></tr>
+    <tr><td class="mono">Knockback</td><td>맞아서 떴다 → 바닥·벽에서 튕김, 착지하면 쓰러짐</td></tr>
+  </tbody></table>
+  <div class="note"><span class="lbl">왜 이렇게</span>
+    예전엔 "점프 중" bool 과 "넉백 중" bool 두 개였는데, 둘 다 <code>true</code>인 <b>말이 안 되는 조합</b>이
+    표현 가능했습니다. 하나로 합쳐서 그 조합 자체를 없앴어요.
+  </div>
+</section>
+
+<!-- ══════════ 04 ══════════ -->
+<section id="s4">
+  <div class="sec-head"><span class="sec-n">04</span><h2>공격</h2></div>
+  <p class="sec-note">근접 공격입니다. <b>공격하는 쪽 위치를 기준으로</b> 앞쪽 지정 위치에 구를 그려서,
+  그 안에 있는 상대에게 "맞았다" 명령을 내립니다.</p>
+
+  <h3>"때리고 싶다"와 "지금 때린다"는 다른 순간이다</h3>
+
+  <div class="figure">
+    <svg viewBox="0 0 820 280" role="img" aria-label="공격 타임라인 — 입력 시점과 판정 시점의 분리">
+      <defs><marker id="k4" markerWidth="9" markerHeight="9" refX="7.5" refY="3.2" orient="auto">
+        <path d="M0,0 L7.5,3.2 L0,6.4 z" fill="var(--accent)"/></marker></defs>
+
+      <text class="m" x="70" y="34" style="text-anchor:start">플레이어가 한 일</text>
+      <rect class="card-a" x="60" y="44" width="150" height="40" rx="7"/>
+      <text class="t t-a" x="135" y="69">X 키 누름</text>
+      <path class="flow" d="M135,84 L135,120" marker-end="url(#k4)"/>
+
+      <line x1="60" y1="150" x2="770" y2="150" stroke="var(--line-strong)" stroke-width="1.5"/>
+      <text class="m" x="70" y="176" style="text-anchor:start">엔진이 하는 일 (애니메이션 클립 시간축)</text>
+
+      <rect class="card" x="60" y="126" width="260" height="48" rx="7"/>
+      <text class="s" x="190" y="154">클립 재생 중 — 아직 아무도 안 맞음</text>
+
+      <line x1="320" y1="112" x2="320" y2="188" stroke="var(--warn)" stroke-width="2"/>
+      <circle cx="320" cy="150" r="6" fill="var(--warn)"/>
+      <text class="t t-w" x="320" y="104">타격 프레임</text>
+      <rect class="card-w" x="360" y="120" width="240" height="60" rx="8"/>
+      <text class="s" x="480" y="144">여기서 범위 검사 (OverlapSphere)</text>
+      <text class="s" x="480" y="162">→ 맞은 상대의 Health.OnHit 호출</text>
+
+      <rect class="card" x="322" y="196" width="300" height="34" rx="6"/>
+      <text class="s" x="472" y="217">이 뒤부터 다른 공격으로 캔슬 가능</text>
+
+      <line x1="700" y1="134" x2="700" y2="166" stroke="var(--line-strong)" stroke-width="2"/>
+      <text class="s" x="700" y="126">클립 끝</text>
+      <text class="s" x="700" y="182">콤보 다음 타 or 종료</text>
+    </svg>
+    <p class="figcap">키를 누른 순간과 실제로 맞히는 순간은 다르다. <b>판정은 애니메이션이 정한 프레임</b>에,
+    그 시점의 위치·방향으로 이뤄진다.</p>
+  </div>
+
+  <h3>공격 하나 = 에셋 파일 하나</h3>
+  <p>공격의 수치와 "공격 중 몸이 어떻게 움직이나"는 <code>AttackData</code> 에셋에 들어 있습니다. <code>Fighter</code>는 종류를 따지지 않고 에셋이 시키는 대로만 해요.</p>
+  <table class="tw" style="display:table"><thead><tr><th>종류</th><th>공격 중 몸</th><th>쓰는 곳</th></tr></thead><tbody>
+    <tr><td class="mono">Locked</td><td>제자리 고정</td><td>기본 콤보 1타</td></tr>
+    <tr><td class="mono">Impulse</td><td>지정 방향으로 강제 돌진</td><td>파고드는 공격</td></tr>
+    <tr><td class="mono">Allow Input</td><td>공격 중에도 이동 가능 (속도 배율)</td><td>움직이며 휘두르는 공격</td></tr>
+  </tbody></table>
+  <ul>
+    <li><b>콤보</b> — 공격 시간 안에 같은 키를 또 누르면 예약해뒀다가, 클립이 끝날 때 다음 타로.</li>
+    <li><b>캔슬</b> — 다른 공격은 "캔슬 권한"이 있고 현재 공격이 <b>타격 프레임을 지난 뒤에만</b> 끼어들 수 있음.</li>
+    <li><b>"지금 공격 중인가"</b>는 <code>Fighter</code>가 아니라 상태(07번)가 안다. <code>Fighter</code>는 어떤 공격인지·언제 넘길지만.</li>
+  </ul>
+</section>
+
+<!-- ══════════ 05 ══════════ -->
+<section id="s5">
+  <div class="sec-head"><span class="sec-n">05</span><h2>피격</h2></div>
+  <p class="sec-note">맞으면 <code>Health.OnHit</code>이 실행됩니다. 바로 피가 깎이는 게 아니라 <b>먼저 몇 가지를 확인</b>해요.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 720 470" role="img" aria-label="피격 처리 순서">
+      <defs><marker id="k5" markerWidth="9" markerHeight="9" refX="7.5" refY="3.2" orient="auto">
+        <path d="M0,0 L7.5,3.2 L0,6.4 z" fill="var(--accent)"/></marker>
+      <marker id="k5b" markerWidth="9" markerHeight="9" refX="7.5" refY="3.2" orient="auto">
+        <path d="M0,0 L7.5,3.2 L0,6.4 z" fill="var(--good)"/></marker></defs>
+
+      <rect class="card-a" x="250" y="16" width="200" height="42" rx="8"/>
+      <text class="t t-a" x="350" y="42">공격에 맞았다</text>
+
+      <rect class="card" x="240" y="82" width="220" height="42" rx="8"/>
+      <text class="t" x="350" y="108">이미 죽었나?</text>
+      <path class="flow" d="M350,58 L350,80" marker-end="url(#k5)"/>
+      <path class="flow-d" d="M460,103 L560,103" marker-end="url(#k5)"/>
+      <rect class="card" x="562" y="84" width="140" height="38" rx="7"/>
+      <text class="s" x="632" y="107">아무 일 없음</text>
+
+      <rect class="card" x="240" y="152" width="220" height="42" rx="8"/>
+      <text class="t" x="350" y="178">패링 판정 창 안?</text>
+      <path class="flow" d="M350,124 L350,150" marker-end="url(#k5)"/>
+      <text class="m" x="362" y="142" style="text-anchor:start">아니오 ↓</text>
+      <path class="flow-g" d="M460,173 L540,173" marker-end="url(#k5b)"/>
+      <rect class="card-g" x="542" y="150" width="164" height="46" rx="7"/>
+      <text class="t t-g" x="624" y="170" style="font-size:11.5px">패링 성공</text>
+      <text class="s" x="624" y="186">공격자를 스턴시킴</text>
+
+      <rect class="card" x="240" y="222" width="220" height="42" rx="8"/>
+      <text class="t" x="350" y="248">회피 무적 프레임?</text>
+      <path class="flow" d="M350,194 L350,220" marker-end="url(#k5)"/>
+      <path class="flow-g" d="M460,243 L540,243" marker-end="url(#k5b)"/>
+      <rect class="card-g" x="542" y="220" width="164" height="46" rx="7"/>
+      <text class="t t-g" x="624" y="240" style="font-size:11.5px">완전히 흘림</text>
+      <text class="s" x="624" y="256">데미지·넉백 다 무시</text>
+
+      <rect class="card-w" x="200" y="298" width="300" height="70" rx="9"/>
+      <text class="t t-w" x="350" y="324">여기까지 왔으면 진짜 피격</text>
+      <text class="s" x="350" y="344">데미지 + 넉백 + 하던 동작 무조건 끊기</text>
+      <text class="s" x="350" y="360">(공격 중이든 점프 중이든 상관없이)</text>
+      <path class="flow" d="M350,264 L350,296" marker-end="url(#k5)"/>
+
+      <rect class="card" x="240" y="396" width="220" height="42" rx="8"/>
+      <text class="t" x="350" y="422">체력 0 이하? → 사망 이벤트</text>
+      <path class="flow" d="M350,368 L350,394" marker-end="url(#k5)"/>
+    </svg>
+    <p class="figcap">위 단계 중 하나에 걸리면 그 프레임 피격은 <b>통째로 무시</b>된다. 다 통과해야 피가 깎인다.</p>
+  </div>
+
+  <h3>넉백: 공격자는 상대가 떠 있는지 모른다</h3>
+
+  <div class="figure">
+    <svg viewBox="0 0 760 250" role="img" aria-label="넉백 값을 둘 다 보내고 맞은 쪽이 고른다">
+      <defs><marker id="k6" markerWidth="9" markerHeight="9" refX="7.5" refY="3.2" orient="auto">
+        <path d="M0,0 L7.5,3.2 L0,6.4 z" fill="var(--accent)"/></marker></defs>
+
+      <rect class="card" x="24" y="90" width="160" height="70" rx="9"/>
+      <text class="t" x="104" y="120">공격자</text><text class="s" x="104" y="138">Fighter</text>
+
+      <rect class="card-d" x="256" y="66" width="220" height="118" rx="10"/>
+      <text class="m" x="366" y="90">한 번에 둘 다 보냄</text>
+      <rect class="card" x="278" y="102" width="176" height="30" rx="6"/>
+      <text class="s" x="366" y="122">지상용 넉백 값</text>
+      <rect class="card" x="278" y="142" width="176" height="30" rx="6"/>
+      <text class="s" x="366" y="162">공중용 넉백 값</text>
+
+      <path class="flow" d="M184,125 L252,125" marker-end="url(#k6)"/>
+
+      <rect class="card" x="548" y="78" width="188" height="94" rx="9"/>
+      <text class="t" x="642" y="108">맞은 쪽 · Health</text>
+      <text class="s" x="642" y="128">"나 지금 떠 있나?"</text>
+      <text class="s" x="642" y="146">→ 둘 중 하나 골라서 적용</text>
+
+      <path class="flow" d="M476,125 L544,125" marker-end="url(#k6)"/>
+    </svg>
+    <p class="figcap">떠 있는지는 <b>맞은 쪽만 아는 정보</b>다. 그래서 공격자는 지상용·공중용을 둘 다 실어 보내고,
+    맞은 쪽이 고른다 — 공중 저글링에서 첫 타와 추가타를 다르게 조절할 수 있는 이유.</p>
+  </div>
+
+  <div class="note"><span class="lbl">"무조건 끊기"가 왜 중요</span>
+    예전엔 피격 쪽이 "점프 중이면 이 플래그, 공격 중이면 저 플래그"를 하나씩 껐고,
+    <b>하나라도 빠뜨리면</b> 그 동작이 안 끝나서 캐릭터가 영영 잠겼습니다. 지금은 분기 없이 무조건 되돌립니다.
+  </div>
+</section>
+
+<!-- ══════════ 06 ══════════ -->
+<section id="s6">
+  <div class="sec-head"><span class="sec-n">06</span><h2>방어 — 회피 · 패링</h2></div>
+  <p class="sec-note">둘 다 <b>Fighter가 공격을 다루는 것과 똑같은 틀</b>입니다. Actor가 입력을 넘기고, 상태는 상태머신이,
+  "언제 끝날지 / 언제 무적인지"만 각 컴포넌트가 관리해요. <b>플레이어만</b> 가집니다.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 780 300" role="img" aria-label="회피와 패링의 타이밍 구간">
+      <text class="t" x="60" y="40" style="text-anchor:start">회피 (Dodger)</text>
+      <rect class="card" x="60" y="52" width="90" height="40" rx="6"/>
+      <text class="s" x="105" y="76">취약</text>
+      <rect class="card-g" x="150" y="52" width="330" height="40" rx="6"/>
+      <text class="t t-g" x="315" y="76" style="font-size:11.5px">무적 — 이 사이에 맞으면 완전히 흘림</text>
+      <rect class="card" x="480" y="52" width="120" height="40" rx="6"/>
+      <text class="s" x="540" y="76">취약</text>
+      <text class="s" x="330" y="112" style="text-anchor:start">진행 중이던 공격을 캔슬하고 시작 · 지상에서만</text>
+
+      <text class="t" x="60" y="170" style="text-anchor:start">패링 (Parrier)</text>
+      <rect class="card" x="60" y="182" width="110" height="40" rx="6"/>
+      <text class="s" x="115" y="206">시동 (취약)</text>
+      <rect class="card-g" x="170" y="182" width="210" height="40" rx="6"/>
+      <text class="t t-g" x="275" y="206" style="font-size:11.5px">판정 창 — 여기서 맞아야 성공</text>
+      <rect class="card" x="380" y="182" width="150" height="40" rx="6"/>
+      <text class="s" x="455" y="206">후딜 (취약)</text>
+      <text class="s" x="300" y="242" style="text-anchor:start">성공하면 공격자를 스턴 (일반 피격보다 오래) → 확정 반격 기회</text>
+    </svg>
+    <p class="figcap">무적/판정은 동작 <b>전체가 아니라 가운데 구간만</b>이다. 너무 일찍/늦게 누르면 그냥 맞는다.</p>
+  </div>
+
+  <table class="tw" style="display:table"><thead><tr><th></th><th>회피</th><th>패링</th></tr></thead><tbody>
+    <tr><td>내 공격 캔슬</td><td>함</td><td>안 함 (중립·이동에서만)</td></tr>
+    <tr><td>맞았을 때</td><td>데미지·넉백 전부 무시</td><td>공격자를 되레 스턴</td></tr>
+    <tr><td>적 스턴 방식</td><td>—</td><td class="mono">기존 피격 경로 재사용 (데미지 0으로 OnHit)</td></tr>
+    <tr><td>나중에 붙일 것</td><td class="mono">OnDodgeSuccess</td><td class="mono">OnParrySuccess</td></tr>
+  </tbody></table>
+  <p style="font-size:14px;color:var(--ink-3)">패링 성공 시 적을 세우는 데 <b>새 코드를 안 씁니다</b> — 공격자에게 "데미지 0짜리 공격"을 되돌려 보내면
+  공격자의 피격 처리가 알아서 공격 취소 + 슬라이드 + 동작 끊기를 합니다.</p>
+</section>
+
+<!-- ══════════ 07 ══════════ -->
+<section id="s7">
+  <div class="sec-head"><span class="sec-n">07</span><h2>상태</h2></div>
+  <p class="sec-note"><b>상태 하나로 두 가지를 동시에</b> 굴립니다 — "지금 뭘 할 수 있나"(로직)와 "어떤 애니메이션"(표현).
+  상태는 성격에 따라 두 종류로 나뉩니다.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 780 380" role="img" aria-label="상태의 두 종류">
+      <rect class="card" x="20" y="20" width="350" height="340" rx="11"/>
+      <text class="t" x="195" y="48">물리 파생 — 자동</text>
+      <text class="s" x="195" y="66">매 프레임 Locomotion 보고 다시 계산</text>
+      <rect class="card-a" x="50" y="86" width="130" height="34" rx="6"/><text class="s" x="115" y="107">Idle</text>
+      <rect class="card-a" x="50" y="128" width="130" height="34" rx="6"/><text class="s" x="115" y="149">Move</text>
+      <rect class="card-a" x="50" y="170" width="130" height="34" rx="6"/><text class="s" x="115" y="191">InAir</text>
+      <rect class="card-a" x="50" y="212" width="130" height="34" rx="6"/><text class="s" x="115" y="233">Stun</text>
+      <rect class="card-a" x="50" y="254" width="130" height="34" rx="6"/><text class="s" x="115" y="275">Airborne</text>
+      <text class="s" x="210" y="150" style="text-anchor:start">서 있고 · 걷고 · 떠 있고</text>
+      <text class="s" x="210" y="170" style="text-anchor:start">· 살짝 밀리고 · 크게 떴다</text>
+      <text class="s" x="210" y="210" style="text-anchor:start">신경 안 써도 알아서</text>
+      <text class="s" x="210" y="230" style="text-anchor:start">바뀐다.</text>
+
+      <rect class="card" x="410" y="20" width="350" height="340" rx="11"/>
+      <text class="t" x="585" y="48">고정 — 직접 끝내야 함</text>
+      <text class="s" x="585" y="66">명시적으로 빠져나가기 전엔 안 바뀜</text>
+      <rect class="card" x="440" y="86" width="150" height="30" rx="6"/><text class="s" x="515" y="106">JumpStart *</text>
+      <rect class="card" x="440" y="122" width="150" height="30" rx="6"/><text class="s" x="515" y="142">JumpLand *</text>
+      <rect class="card" x="440" y="158" width="150" height="30" rx="6"/><text class="s" x="515" y="178">Attack</text>
+      <rect class="card" x="440" y="194" width="150" height="30" rx="6"/><text class="s" x="515" y="214">Dodge</text>
+      <rect class="card" x="440" y="230" width="150" height="30" rx="6"/><text class="s" x="515" y="250">Parry / ParrySuccess</text>
+      <rect class="card" x="440" y="266" width="150" height="30" rx="6"/><text class="s" x="515" y="286">Landed *</text>
+      <rect class="card" x="440" y="302" width="150" height="30" rx="6"/><text class="s" x="515" y="322">GetUp *</text>
+      <text class="s" x="612" y="170" style="text-anchor:start">Attack·Dodge·Parry는</text>
+      <text class="s" x="612" y="188" style="text-anchor:start">각자 타이머로 끝냄</text>
+      <text class="t t-w" x="612" y="290" style="text-anchor:start; font-size:11px">* 애니메이션 이벤트가</text>
+      <text class="s" x="612" y="308" style="text-anchor:start">와야 끝남</text>
+    </svg>
+    <p class="figcap">왼쪽은 자동, 오른쪽은 수동. <code>*</code> 표시는 애니메이션이 "끝났다" 신호를 줘야 빠져나오는 상태.</p>
+  </div>
+
+  <div class="warn"><span class="lbl">안전장치 (워치독)</span>
+    <code>*</code> 상태에서 애니메이션 이벤트가 안 오면(클립에 이벤트를 안 심었거나 도중에 바뀜) 캐릭터가 <b>영영 잠깁니다.</b>
+    그래서 <b>2초</b>가 지나도 안 끝나면 강제로 풀고 콘솔에 "무슨 이벤트를 기다렸는지" 경고를 찍어요.
+    정상이면 절대 안 뜨는 경고입니다.
+  </div>
+
+  <p>또 하나: <b>애니메이션은 상태를 따라가기만 합니다.</b> 상태머신이 Animator를 몰고, 반대로 Animator를 읽어서
+  로직을 판단하는 일은 없어요. Animator에 전환 화살표(Transition)가 하나도 없는 이유입니다 — 코드가 직접 클립을 틉니다.</p>
+</section>
+
+<!-- ══════════ 08 ══════════ -->
+<section id="s8">
+  <div class="sec-head"><span class="sec-n">08</span><h2>애니메이션 다리</h2></div>
+  <p class="sec-note">"지금이 때리는 순간!", "지금 발 뗐어!" 같은 <b>타이밍은 애니메이션 클립이 알려줍니다.</b>
+  그런데 그 신호는 Animator가 붙은 오브젝트로만 가서, 중계자가 하나 필요합니다.</p>
+
+  <div class="figure">
+    <svg viewBox="0 0 740 250" role="img" aria-label="애니메이션 이벤트 중계">
+      <defs><marker id="k8" markerWidth="9" markerHeight="9" refX="7.5" refY="3.2" orient="auto">
+        <path d="M0,0 L7.5,3.2 L0,6.4 z" fill="var(--accent)"/></marker></defs>
+
+      <rect class="card" x="24" y="88" width="180" height="74" rx="9"/>
+      <text class="t" x="114" y="118">공격 클립 재생 중</text>
+      <text class="t t-w" x="114" y="140" style="font-size:12px">"지금이야!"</text>
+
+      <rect class="card-a" x="284" y="82" width="170" height="86" rx="10"/>
+      <text class="t t-a" x="369" y="112">AnimationEventRelay</text>
+      <text class="s" x="369" y="132">Visual 자식에 붙는</text>
+      <text class="s" x="369" y="148">전화 교환원</text>
+
+      <path class="flow" d="M204,125 L280,125" marker-end="url(#k8)"/>
+
+      <rect class="card" x="536" y="34" width="182" height="60" rx="9"/>
+      <text class="t" x="627" y="60">Fighter</text>
+      <text class="s" x="627" y="78">"타격 판정해라"</text>
+
+      <rect class="card" x="536" y="150" width="182" height="60" rx="9"/>
+      <text class="t" x="627" y="176">StateMachine</text>
+      <text class="s" x="627" y="194">"점프 띄워라 / 일어나라"</text>
+
+      <path class="flow" d="M454,108 C495,90 500,72 532,64" marker-end="url(#k8)"/>
+      <path class="flow" d="M454,142 C495,160 500,172 532,180" marker-end="url(#k8)"/>
+    </svg>
+    <p class="figcap">클립이 신호를 외치면 <code>AnimationEventRelay</code>가 받아서 본체(부모)의 담당 부품에게 전달한다.
+    이 다리가 없으면 공격이 아무도 안 맞고, 점프가 안 뜨고, 넘어진 뒤 못 일어난다(2초 뒤 안전장치가 품).</p>
+  </div>
+
+  <table class="tw" style="display:table"><thead><tr><th>클립이 외치는 신호</th><th>어느 클립에</th><th>결과</th></tr></thead><tbody>
+    <tr><td class="mono">OnAttackHitFrame</td><td>각 공격 클립</td><td>범위 검사 → 맞은 애 OnHit</td></tr>
+    <tr><td class="mono">OnJumpLaunchFrame</td><td>JumpStart</td><td>여기서 실제로 몸이 뜬다</td></tr>
+    <tr><td class="mono">OnJumpLandEndFrame</td><td>JumpLand</td><td>착지 경직 해제</td></tr>
+    <tr><td class="mono">OnKnockdownGetUpStartFrame</td><td>Landed</td><td>쓰러짐 → 일어나기 시작</td></tr>
+    <tr><td class="mono">OnKnockdownGetUpEndFrame</td><td>GetUp</td><td>기상 완료</td></tr>
+  </tbody></table>
+</section>
+
+<!-- ══════════ 09 ══════════ -->
+<section id="s9">
+  <div class="sec-head"><span class="sec-n">09</span><h2>기억할 규칙</h2></div>
+  <p class="sec-note">이걸 어기면 <b>에러 없이 조용히</b> 이상하게 동작합니다.</p>
+
+  <table class="tw" style="display:table"><thead><tr><th>규칙</th><th>어기면</th></tr></thead><tbody>
+    <tr><td>Animator 상태 이름 = <code>CharacterState</code> 값 = 공격 클립 이름, 철자까지 똑같이</td><td>그 상태만 애니메이션이 안 바뀜 (경고 1회)</td></tr>
+    <tr><td><code>AnimationEventRelay</code>는 Animator 붙은 오브젝트(Visual 자식)에</td><td>모든 타이밍 신호가 안 옴 → 공격·점프·기상 먹통</td></tr>
+    <tr><td>한 번만 재생되는 스프라이트 클립은 Loop Time 끄기, 전환 블렌드 0</td><td>상태 전환 때 한 프레임 깜빡임</td></tr>
+    <tr><td>캐릭터당 (공격 대상이 되는) 콜라이더 1개</td><td>한 번 때렸는데 두 번 맞은 걸로 → 데미지 2배·넉백 이상</td></tr>
+    <tr><td>몸 부품은 자기 <code>Update()</code>를 두지 않는다</td><td>"누가 먼저 실행됐나" 버그가 다시 가능해짐</td></tr>
+    <tr><td>8방향 스냅: 플레이어 켬 / AI 끔</td><td>적이 45도 단위로만 다가와서 어색함</td></tr>
+  </tbody></table>
+
+  <h3>아직 안 된 것</h3>
+  <ul>
+    <li><b>사망 처리</b> — 죽어도 Actor는 계속 돈다. AI가 제대로 붙으면 죽은 적이 계속 움직임.</li>
+    <li><b>EnemyBrain은 임시</b> — 제자리에서 일정 간격 공격만. 진짜 AI는 이 파일을 갈아엎으며 들어옴 (Actor는 무변경).</li>
+    <li><b>원거리 공격</b> — Fighter는 근접 전용. 투사체는 아직 없음.</li>
+    <li><b>회피·패링 보상</b> — 훅은 뚫려 있지만 지금은 콘솔 로그만.</li>
+  </ul>
+</section>
+
+</div></main>
+</div>
+
+<script>
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('.rail-nav a'));
+  var byId = {};
+  links.forEach(function(a){ byId[a.getAttribute('href').slice(1)] = a; });
+  if (!('IntersectionObserver' in window)) return;
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if (!e.isIntersecting) return;
+      links.forEach(function(a){ a.classList.remove('on'); });
+      var a = byId[e.target.id];
+      if (a) a.classList.add('on');
+    });
+  }, { rootMargin: '-10px 0px -72% 0px', threshold: 0 });
+  document.querySelectorAll('section').forEach(function(s){ io.observe(s); });
+})();
+</script>
+</body>
+</html>

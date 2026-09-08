@@ -5,8 +5,8 @@ using UnityEngine;
 /// 체력과 피격 처리. 맞으면 진행 중이던 동작을 <b>무조건</b> 끊고(CharacterStateMachine.Interrupt),
 /// 넉백을 Locomotion에 넘긴다. 어느 쪽 넉백(지상/공중)을 쓸지는 지금 떠 있는지 아는 이쪽이 고른다.
 ///
-/// 사망은 이벤트(OnDeath)로만 알린다 — 소멸/연출은 이 이벤트를 구독하는 별도 컴포넌트가 맡는다
-/// (스켈레톤 범위에선 없음. 죽은 캐릭터는 dead 플래그로 더 이상 안 맞고 제자리에 남는다).
+/// 사망하면 CharacterStateMachine을 종착 상태(Dead)로 보내고 OnDeath를 쏜다. 몸을 멈추는 건 Actor가,
+/// 오브젝트 소멸(적)은 OnDeath를 구독하는 EnemyDespawn이 맡는다.
 /// </summary>
 [RequireComponent(typeof(Locomotion), typeof(Fighter), typeof(CharacterStateMachine))]
 public class Health : MonoBehaviour, IHittable
@@ -16,6 +16,9 @@ public class Health : MonoBehaviour, IHittable
 
     public int CurrentHealth { get; private set; }
     public int MaxHealth => characterStatData != null ? characterStatData.maxHealth : 100;
+
+    /// <summary>체력이 0 이하가 되어 사망한 상태인지. Actor가 이걸 보고 이번 프레임부터 판단·이동을 멈춘다.</summary>
+    public bool IsDead => dead;
 
     /// <summary>체력이 0 이하가 된 순간 한 번 발생.</summary>
     public event Action OnDeath;
@@ -71,6 +74,7 @@ public class Health : MonoBehaviour, IHittable
         if (CurrentHealth <= 0)
         {
             dead = true;
+            stateMachine.EnterDead(); // 종착 상태로. Interrupt는 이미 위에서 불렸지만 Dead가 그 위를 덮는다.
             Debug.Log($"{name} 사망");
             OnDeath?.Invoke();
         }

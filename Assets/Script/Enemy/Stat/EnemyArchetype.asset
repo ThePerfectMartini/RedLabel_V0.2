@@ -9,7 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 23a9454ca810c5140bf44ef6ce58ed30, type: 3}
-  m_Name: CharacterStatData
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterStatData
-  maxHealth: 30
+  m_Script: {fileID: 11500000, guid: db10c707668883246a16878eea8e4085, type: 3}
+  m_Name: EnemyArchetype
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyArchetype
+  approachWeight: 1
+  waitWeight: 1
+  retreatWeight: 1
+  attackWeight: 1
+  dryFireWeight: 1
