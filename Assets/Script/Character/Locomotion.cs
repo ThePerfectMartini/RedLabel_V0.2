@@ -73,6 +73,18 @@ public class Locomotion : MonoBehaviour
     /// <summary>지금 공중에 뜬 것이 실제로 Jump()를 거친 결과인지. 착지 경직으로 이어질지를 가른다.</summary>
     public bool LaunchedByJump => origin == AirborneOrigin.Jump;
 
+    /// <summary>
+    /// MovementStatData에서 읽어온 기본 이동 속도(배율 적용 전). 원하는 절대 속도를
+    /// CharacterIntent.MoveSpeedScale로 환산해야 하는 AI가 읽는다.
+    /// </summary>
+    public float MoveSpeed => moveSpeed;
+
+    /// <summary>
+    /// 맵 경계에서 이만큼 떨어진 곳이 실제로 갈 수 있는 한계다(콜라이더 크기에서 계산).
+    /// "저 방향으로 얼마나 갈 수 있나"를 미리 재야 하는 AI가 읽는다.
+    /// </summary>
+    public float BoundaryRadius => boundaryRadius;
+
     /// <summary>현재 수평 속력. CharacterStateMachine이 Move/Idle을 가르는 기준.</summary>
     public float HorizontalSpeed => new Vector2(velocity.x, velocity.z).magnitude;
 

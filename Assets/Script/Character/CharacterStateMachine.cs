@@ -8,10 +8,10 @@ public enum CharacterState
     Idle,
     Move,
     InAir,
-    Stun,      // 가벼운 피격 — 그라운드 슬라이드 중
-    Airborne,  // 강한 피격 — 넉백으로 공중에 뜸
+    Airborne,  // 강한 피격 — 넉백으로 공중에 뜸. 착지하면 Landed로 이어진다
 
     // --- 고정(sticky): 명시적 호출/애니메이션 이벤트로만 빠져나간다 ---
+    Stun,         // 가벼운 피격 — 지상 경직. Stun 클립 길이만큼 유지되고 스스로 탈출 (워치독 대상 아님)
     JumpStart,    // 점프 준비. OnJumpLaunchFrame에서 탈출
     JumpLand,     // 착지 경직. OnJumpLandEndFrame에서 탈출
     Attack,       // 공격 재생. Fighter의 타이머로 스스로 탈출 (워치독 대상 아님)
@@ -49,6 +49,12 @@ public class CharacterStateMachine : MonoBehaviour
              "강제로 해제하고 Console에 경고를 남긴다. 정상 상태에서는 절대 발동하지 않아야 하는 값.")]
     public float actionPhaseTimeout = 2f;
 
+    [KoreanLabel("피격 경직 시간 직접 지정(초)")]
+    [Tooltip("0이면 Animator의 'Stun' 클립 길이를 그대로 쓴다(기본). 0보다 큰 값을 넣으면 클립 길이 대신 그 값이 경직 시간이 된다. " +
+             "클립 길이를 쓰면 편하지만, 애니메이터가 클립을 손보는 순간 전투 밸런스까지 같이 흔들린다. " +
+             "밸런스를 클립과 분리해 고정하고 싶으면 값을 넣을 것.")]
+    public float hitStunDurationOverride = 0f;
+
     public CharacterState CurrentState { get; private set; } = CharacterState.Idle;
 
     /// <summary>새 행동(이동/공격/점프)을 시작할 수 있는 상태인지. 고정 상태도 아니고 얻어맞은 여파도 없어야 한다.</summary>
@@ -74,10 +80,15 @@ public class CharacterStateMachine : MonoBehaviour
 
     float stickyElapsed;
 
+    float stunRemaining;         // 지상 경직이 끝나기까지 남은 시간
+    float stunClipLength = -1f;  // 'Stun' 클립 길이 캐시. -1이면 아직 안 찾아봄
+    bool warnedMissingStunClip;
+
     // "Animator에 그 State가 없다"를 이미 경고한 대상. CrossFade는 대상이 없어도 조용히 실패하므로 한 번만 찍는다.
     readonly HashSet<string> warnedMissing = new HashSet<string>();
 
     static bool IsSticky(CharacterState s) =>
+        s == CharacterState.Stun ||
         s == CharacterState.JumpStart || s == CharacterState.JumpLand ||
         s == CharacterState.Attack || s == CharacterState.Dodge ||
         s == CharacterState.Parry || s == CharacterState.ParrySuccess ||
@@ -144,7 +155,72 @@ public class CharacterStateMachine : MonoBehaviour
     /// <b>어떤 상태였는지 분기하지 않는 것이 핵심</b> — 예전엔 피격 쪽이 플래그를 하나씩 껐고 하나라도
     /// 빠뜨리면 그 동작의 Animation Event가 영영 안 와서 이동이 영구히 잠겼다.
     /// </summary>
-    public void Interrupt() => SetState(DerivePhysicsState());
+    public void Interrupt()
+    {
+        // 공중으로 떠오른 피격은 경직이 "착지할 때까지"라 물리에서 파생한 그대로 둔다(Airborne → Landed → GetUp).
+        if (locomotion.IsKnockedBackAirborne)
+        {
+            SetState(DerivePhysicsState());
+            return;
+        }
+
+        // 지상 피격의 경직 시간은 Stun 클립 길이가 정한다. 넉백이 얼마나 세든, 미끄러짐이 언제 멈추든 무관하다.
+        float duration = ResolveHitStunDuration();
+        if (duration <= 0f)
+        {
+            WarnMissingStunClip();
+            SetState(DerivePhysicsState()); // 길이를 모르면 잠기는 것보다 즉시 푸는 쪽이 낫다
+            return;
+        }
+
+        stunRemaining = duration;
+
+        // 이미 Stun이면 SetState가 무시되므로(같은 상태) 클립만 처음부터 다시 재생한다 — 연타로 맞으면 경직이 새로 시작돼야 한다.
+        if (CurrentState == CharacterState.Stun)
+            CrossFade(nameof(CharacterState.Stun));
+        else
+            SetState(CharacterState.Stun);
+    }
+
+    /// <summary>
+    /// 적용할 경직 시간(초). 직접 지정이 0보다 크면 그 값을, 아니면 'Stun' 클립 길이를 쓴다.
+    /// AttackData.ResolveDuration()과 같은 규칙이다.
+    /// </summary>
+    float ResolveHitStunDuration()
+    {
+        if (hitStunDurationOverride > 0f) return hitStunDurationOverride;
+
+        if (stunClipLength < 0f)
+            stunClipLength = FindClipLength(nameof(CharacterState.Stun));
+
+        return stunClipLength;
+    }
+
+    /// <summary>
+    /// 컨트롤러에 실린 클립 중 이름이 같은 것의 길이. 이 프로젝트는 State 이름 == 클립 이름이 불변식이라
+    /// 이름으로 찾을 수 있다. 런타임에는 State에서 클립을 직접 얻는 API가 없어서(에디터 전용) 이 방법을 쓴다.
+    /// </summary>
+    float FindClipLength(string clipName)
+    {
+        if (animator == null || animator.runtimeAnimatorController == null) return 0f;
+
+        foreach (AnimationClip clip in animator.runtimeAnimatorController.animationClips)
+        {
+            if (clip != null && clip.name == clipName)
+                return clip.length;
+        }
+
+        return 0f;
+    }
+
+    void WarnMissingStunClip()
+    {
+        if (warnedMissingStunClip) return;
+
+        warnedMissingStunClip = true;
+        Debug.LogWarning($"{name}: Animator에 '{nameof(CharacterState.Stun)}' 클립이 없어 피격 경직 시간을 알 수 없습니다. " +
+            "경직 없이 즉시 풀립니다. 클립을 넣거나 '피격 경직 시간 직접 지정'에 값을 넣으세요.");
+    }
 
     // 애니메이션 이벤트(AnimationEventRelay 경유). 엉뚱한 이벤트가 무관한 동작을 망가뜨리지 않게 상태를 가드한다.
 
@@ -177,6 +253,7 @@ public class CharacterStateMachine : MonoBehaviour
     public void Evaluate()
     {
         TickWatchdog();
+        TickHitStun();
 
         if (!IsSticky(CurrentState))
             SetState(DerivePhysicsState());
@@ -190,7 +267,6 @@ public class CharacterStateMachine : MonoBehaviour
     CharacterState DerivePhysicsState()
     {
         if (locomotion.IsKnockedBackAirborne) return CharacterState.Airborne;
-        if (locomotion.IsGroundSliding)       return CharacterState.Stun;
         if (!locomotion.IsGrounded)            return CharacterState.InAir;
         if (locomotion.HorizontalSpeed > MoveEpsilon) return CharacterState.Move;
         return CharacterState.Idle;
@@ -235,10 +311,26 @@ public class CharacterStateMachine : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 지상 경직 타이머. 다 되면 남은 미끄러짐도 같이 끊는다 — 안 그러면
+    /// "움직일 수는 있는데 아직 밀려나는 중"인 애매한 구간이 생긴다(경직보다 미끄러짐이 긴 센 공격에서).
+    /// </summary>
+    void TickHitStun()
+    {
+        if (CurrentState != CharacterState.Stun) return;
+
+        stunRemaining -= Time.deltaTime;
+        if (stunRemaining > 0f) return;
+
+        locomotion.StopGroundSlide();
+        SetState(DerivePhysicsState());
+    }
+
     void TickWatchdog()
     {
-        // Attack / Dodge / Parry / ParrySuccess는 각자의 타이머(Fighter / Dodger / Parrier)로 자력 종료하므로 감시 대상이 아니다.
+        // Stun / Attack / Dodge / Parry / ParrySuccess는 각자의 타이머로 자력 종료하므로 감시 대상이 아니다.
         if (!IsSticky(CurrentState)
+            || CurrentState == CharacterState.Stun
             || CurrentState == CharacterState.Attack
             || CurrentState == CharacterState.Dodge
             || CurrentState == CharacterState.Parry

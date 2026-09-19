@@ -20,6 +20,16 @@ public class Health : MonoBehaviour, IHittable
     /// <summary>체력이 0 이하가 된 순간 한 번 발생.</summary>
     public event Action OnDeath;
 
+    /// <summary>
+    /// 피격이 실제로 적용된 순간 발생. 패링·회피로 흘려낸 타격은 여기 오지 않는다 —
+    /// 그건 맞은 것이 아니기 때문이다(아래 OnHit에서 그 두 경우는 먼저 빠져나간다).
+    ///
+    /// 상태만 봐서는 "맞았다"를 놓칠 수 있어서 이벤트로 알린다. 넉백이 0인 공격에 맞으면
+    /// Interrupt 후 상태가 그냥 Idle이라, 상태를 폴링하는 쪽에서는 아무 일도 없었던 것처럼 보인다.
+    /// 지금은 적 AI가 진행 중인 행동을 끊는 신호로 쓴다.
+    /// </summary>
+    public event Action<HitData> OnHitTaken;
+
     Locomotion locomotion;
     Fighter fighter;
     CharacterStateMachine stateMachine;
@@ -67,6 +77,7 @@ public class Health : MonoBehaviour, IHittable
         Vector3 knockback = hit.ResolveKnockbackVelocity(!locomotion.IsGrounded);
         locomotion.ApplyKnockback(knockback, hit.GroundSlideDeceleration);
         stateMachine.Interrupt();
+        OnHitTaken?.Invoke(hit);
 
         if (CurrentHealth <= 0)
         {

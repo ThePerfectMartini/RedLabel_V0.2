@@ -24,6 +24,15 @@ public struct CharacterIntent
     /// </summary>
     public AttackData AttackToStart;
 
+    /// <summary>
+    /// 이번 프레임의 이동 속도 배율(기본 이동 속도 기준). <b>0이면 "지정 없음"이라 1과 같다</b> —
+    /// CharacterIntent.None이 default라서 0이 기본값이 될 수밖에 없기 때문이다.
+    ///
+    /// MoveInput은 방향만 전달되고 크기는 Locomotion에서 버려지므로(항상 normalize), 걷기/달리기처럼
+    /// 같은 방향을 다른 속도로 가려면 이 값이 따로 필요하다. AI의 행동별 속도 차이(빠른 접근 / 느린 후퇴)가 이걸 쓴다.
+    /// </summary>
+    public float MoveSpeedScale;
+
     /// <summary>이번 프레임에 점프하고 싶은지.</summary>
     public bool WantsJump;
 

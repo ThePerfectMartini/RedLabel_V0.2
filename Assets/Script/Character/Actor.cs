@@ -60,7 +60,9 @@ public class Actor : MonoBehaviour
 
         // 이동은 이번 프레임에 시작된 공격/점프까지 반영해 다시 계산한 잠금으로 판단한다.
         bool moveLocked = stateMachine.IsMovementLocked || !fighter.MovementAllowed;
-        locomotion.MoveSpeedMultiplier = fighter.MoveSpeedMultiplier;
+        // 공격 중 배율(Fighter)과 의도 쪽 배율(AI의 행동별 속도)은 서로 다른 이유의 감속이라 곱해서 겹친다.
+        float intentSpeedScale = intent.MoveSpeedScale > 0f ? intent.MoveSpeedScale : 1f;
+        locomotion.MoveSpeedMultiplier = fighter.MoveSpeedMultiplier * intentSpeedScale;
         locomotion.SetMoveInput(moveLocked ? Vector2.zero : intent.MoveInput);
 
         // 착지 엣지 감지를 위해 Tick 직전 값을 기억. LaunchedByJump/IsKnockedBackAirborne은 착지하면 꺼진다.
