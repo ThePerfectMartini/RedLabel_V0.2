@@ -69,6 +69,11 @@ public class MeleeEnemyAI : MonoBehaviour, IIntentSource, IMeleeEnemyAIDebugInfo
             health.OnHitTaken -= OnHitTaken;
     }
 
+    // 다른 적이 "거기 누가 서 있나"를 물어볼 수 있게 명부에 올린다. 대기 자리와 재정렬 목적지가 이걸 본다.
+    void OnEnable() => EnemyCrowd.Register(transform);
+
+    void OnDisable() => EnemyCrowd.Unregister(transform);
+
     void OnHitTaken(HitData hit) => context.NotifyHit();
 
     /// <summary>
@@ -88,13 +93,7 @@ public class MeleeEnemyAI : MonoBehaviour, IIntentSource, IMeleeEnemyAIDebugInfo
             new WeightedRandomNode.Option(() => aiData.nearMeleeWeight, BuildMeleeBranch()),
             new WeightedRandomNode.Option(() => aiData.nearRepositionWeight, new MoveToTargetNode(aiData.reposition)));
 
-        // 슬롯이 다 찼을 때: 공격 후보를 빼고 비공격 행동만. 자리가 빌 때까지 이 표만 반복된다.
-        BTNode blockedChoice = new WeightedRandomNode(
-            new WeightedRandomNode.Option(() => aiData.blockedWaitWeight, new PostAttackWaitNode()),
-            new WeightedRandomNode.Option(() => aiData.blockedSlowStepWeight, new MoveToTargetNode(aiData.slowStep)),
-            new WeightedRandomNode.Option(() => aiData.blockedRepositionWeight, new MoveToTargetNode(aiData.reposition)));
-
-        combatLoop = new ActionSelectorNode(farChoice, nearChoice, blockedChoice);
+        combatLoop = new ActionSelectorNode(farChoice, nearChoice, BuildStandbyLoop());
 
         // 피격 분기 (설계서 ⑦ → ⑧). 끊긴 행동을 이어서 하지 않는다.
         //
@@ -107,6 +106,24 @@ public class MeleeEnemyAI : MonoBehaviour, IIntentSource, IMeleeEnemyAIDebugInfo
             hitStun,
             new ConditionNode(_ => hitStun.WasKnockedDown), // 안 넘어졌으면 여기서 끝, 바로 행동 선택으로
             new MoveToTargetNode(aiData.escape));
+    }
+
+    /// <summary>
+    /// 내 쪽 슬롯이 차 있을 때 도는 <b>대기 전용 루프</b>. 공격 행동 루프와는 표가 아예 다르다 —
+    /// 여기 있는 셋 중 무엇이 뽑혀도 적은 공격 위치보다 바깥에 있는 <b>대기 링</b>을 벗어나지 않는다.
+    /// 자리가 빌 때까지 루트가 이 표로 계속 돌려보낸다.
+    ///
+    /// 공격 후 행동(느린 이동)을 여기 섞지 않는 이유: 그건 "방금 때리고 물러난다"는 뜻이라
+    /// 아직 한 대도 못 친 대기 적이 하면 의미가 어긋나고, 목표도 링과 무관해서 대기 공간을 벗어난다.
+    ///
+    /// 제자리 대기의 시간은 짧게(<c>standbyWait…</c>) 잡는다 — 길면 멈춰 서서 줄 서 있는 그림이 된다.
+    /// </summary>
+    BTNode BuildStandbyLoop()
+    {
+        return new WeightedRandomNode(
+            new WeightedRandomNode.Option(() => aiData.standbyWaitWeight, new PostAttackWaitNode(WaitPurpose.Standby)),
+            new WeightedRandomNode.Option(() => aiData.standbyQueueStepWeight, new MoveToTargetNode(aiData.standby)),
+            new WeightedRandomNode.Option(() => aiData.standbyRepositionWeight, new MoveToTargetNode(aiData.standbyReposition)));
     }
 
     /// <summary>
@@ -125,6 +142,16 @@ public class MeleeEnemyAI : MonoBehaviour, IIntentSource, IMeleeEnemyAIDebugInfo
             new WeightedRandomNode.Option(() => aiData.postAttackSlowStepWeight, new MoveToTargetNode(aiData.slowStep)));
 
         return new SequenceNode(approachAndAttack, postAttack);
+    }
+
+    /// <summary>지금 어느 쪽 공격권을 들고 있는지 한 줄로. logDecisions 전용.</summary>
+    string DescribeSlot()
+    {
+        if (context.Slots == null) return "슬롯 관리자 없음";
+
+        return context.Slots.TryGetSide(aiData.slotReach, gameObject, out AttackSide side)
+            ? $"공격권 {(side == AttackSide.Right ? "오른쪽" : "왼쪽")}"
+            : "공격권 없음";
     }
 
     public CharacterIntent GetIntent(float deltaTime)
@@ -151,7 +178,7 @@ public class MeleeEnemyAI : MonoBehaviour, IIntentSource, IMeleeEnemyAIDebugInfo
         {
             if (logDecisions)
                 Debug.Log($"{name}: {(active == hitBranch ? "피격 경직" : combatLoop.Situation.ToString())} → {status} " +
-                          $"(거리 {context.DistanceToTarget:0.00})", this);
+                          $"(거리 {context.DistanceToTarget:0.00}, {DescribeSlot()})", this);
 
             // 무엇이 끝났든 루트부터 다시 고른다. 이탈 점프 뒤의 복귀도 "완전 랜덤, 직전 행동과 무관"이어야 하므로
             // 끊긴 행동을 이어서 하지 않는다.

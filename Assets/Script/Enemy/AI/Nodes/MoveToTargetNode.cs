@@ -48,7 +48,9 @@ public class MoveToTargetNode : BTNode
     /// 목적지를 고르는 원의 반지름(= 비켜 돌 때 유지하는 거리).
     /// 원을 쓰지 않는 프로필이면 0 — 디버그 표시가 0인지만 보고 그릴지 말지 정할 수 있게.
     /// </summary>
-    public float OrbitRadius => profile.path == MovePath.SemiCircle || profile.goal == MoveGoal.OrbitPoint
+    public float OrbitRadius => profile.path == MovePath.SemiCircle
+                             || profile.goal == MoveGoal.OrbitPoint
+                             || profile.goal == MoveGoal.QueueSpot
         ? profile.orbitRadius
         : 0f;
 
@@ -120,7 +122,7 @@ public class MoveToTargetNode : BTNode
         // 돌던 곡선도 버린다 — 선회 제한을 그대로 걸면 반대편으로 넘어가느라 큰 호를 그리며 빙 돌게 된다.
         if (profile.goal == MoveGoal.AttackSide
             && profile.tracking != MoveTracking.Snapshot
-            && context.NearSideSign != goalSideSign)
+            && context.AttackSideSign != goalSideSign)
         {
             CaptureGoal(context);
             refreshCountdown = profile.trackingRefreshInterval;
@@ -163,7 +165,7 @@ public class MoveToTargetNode : BTNode
     {
         goalPosition = ResolveGoal(context);
         trackedTarget = context.FlatTargetPosition;
-        goalSideSign = context.NearSideSign;
+        goalSideSign = context.AttackSideSign;
     }
 
     Vector3 ResolveGoal(MeleeEnemyContext context)
@@ -172,17 +174,17 @@ public class MoveToTargetNode : BTNode
 
         switch (profile.goal)
         {
-            // 플레이어의 옆구리 — 지금 가까운 쪽. 플레이어가 나를 지나쳐 좌우가 뒤집히면 목표도 같이 뒤집힌다.
+            // 플레이어의 옆구리 — 내가 공격권을 잡은 쪽(아직 없으면 지금 가까운 쪽).
+            // 접근 도중 가까운 쪽이 뒤집혀 슬롯을 옮겨 앉으면 목표도 같이 뒤집힌다.
             case MoveGoal.AttackSide:
-                return target + Vector3.right * (context.NearSideSign * context.Data.triggerCenterDistance);
+                return target + Vector3.right * (context.AttackSideSign * context.Data.triggerCenterDistance);
 
-            // 플레이어를 중심으로 한 원 둘레의 한 점. 각도는 시작할 때 한 번 뽑아 두고 여기서는 쓰기만 한다 —
-            // 실시간 추적이면 이 함수가 매 프레임 불리므로, 여기서 뽑으면 목적지가 매 프레임 바뀐다.
+            // 플레이어를 중심으로 한 원 둘레의 한 점. 재정렬이든 대기 자리든 각도만 다르게 뽑았을 뿐 여기서는 같다.
+            // 각도는 시작할 때 한 번 뽑아 두고 여기서는 쓰기만 한다 — 실시간 추적이면 이 함수가 매 프레임
+            // 불리므로, 여기서 뽑으면 목적지가 매 프레임 바뀌어 영영 도착하지 못한다.
             case MoveGoal.OrbitPoint:
-            {
-                float radians = orbitAngleDeg * Mathf.Deg2Rad;
-                return target + new Vector3(Mathf.Sin(radians), 0f, Mathf.Cos(radians)) * profile.orbitRadius;
-            }
+            case MoveGoal.QueueSpot:
+                return target + AngleToOffset(orbitAngleDeg) * profile.orbitRadius;
 
             // 플레이어 반대쪽으로 도망친다. 막혀 있으면 트인 쪽을 찾아 간다.
             case MoveGoal.Escape:
@@ -277,9 +279,11 @@ public class MoveToTargetNode : BTNode
         return (edge - position) / direction;
     }
 
+    // 링 위 목적지를 정할 때 훑어보는 후보 수. 많을수록 남과 덜 겹치지만 목표를 잡는 순간에만 도는 계산이다.
+    const int RingAngleSamples = 9;
+
     /// <summary>
-    /// 원 둘레에서 목적지를 하나 고른다. 지금 내가 있는 각도에서 최소 이동 각도만큼은 떨어진 곳을 뽑는다 —
-    /// 안 그러면 바로 옆이 뽑혀 재정렬이 시작하자마자 끝나버린다.
+    /// 원 둘레에서 목적지를 하나 고른다. 재정렬이냐 대기 자리냐에 따라 <b>후보를 뽑는 방식</b>만 다르다.
     ///
     /// <b>시작할 때 한 번만 뽑는다.</b> 실시간 추적이면 목표를 매 프레임 다시 계산하는데,
     /// 그때마다 각도를 새로 뽑으면 목적지가 원 위를 마구 튀어 다녀 영영 도착하지 못한다.
@@ -287,19 +291,98 @@ public class MoveToTargetNode : BTNode
     /// </summary>
     void DecideOrbitAngle(MeleeEnemyContext context)
     {
-        if (profile.goal != MoveGoal.OrbitPoint)
+        switch (profile.goal)
         {
-            orbitAngleDeg = 0f;
-            return;
+            case MoveGoal.OrbitPoint: orbitAngleDeg = PickRepositionAngle(context); break;
+            case MoveGoal.QueueSpot:  orbitAngleDeg = PickQueueAngle(context);      break;
+            default:                  orbitAngleDeg = 0f;                           break;
         }
+    }
 
+    /// <summary>
+    /// 재정렬의 목적지. 지금 내가 있는 각도에서 최소 이동 각도만큼은 떨어진 곳을 뽑는다 —
+    /// 안 그러면 바로 옆이 뽑혀 재정렬이 시작하자마자 끝나버린다.
+    ///
+    /// 후보를 여러 개 뽑아 그중 <b>다른 적에게서 가장 멀리 떨어진</b> 곳으로 간다. 후보 자체가 랜덤이라
+    /// "매번 다른 데로 돈다"는 성격은 그대로면서, 이미 누가 서 있는 자리에 겹쳐 서는 것만 피한다.
+    /// </summary>
+    float PickRepositionAngle(MeleeEnemyContext context)
+    {
         Vector3 fromTarget = context.FlatSelfPosition - context.FlatTargetPosition;
         float currentAngle = fromTarget.sqrMagnitude < 0.0001f
             ? Random.value * 360f // 완전히 겹쳤으면 기준 각도가 없다
             : Mathf.Atan2(fromTarget.x, fromTarget.z) * Mathf.Rad2Deg;
 
         float minSweep = Mathf.Clamp(profile.repositionMinSweep, 0f, 180f);
-        orbitAngleDeg = currentAngle + Random.Range(minSweep, 360f - minSweep);
+
+        float best = currentAngle + Random.Range(minSweep, 360f - minSweep);
+        float bestClearance = ClearanceAtAngle(context, best);
+
+        for (int i = 1; i < RingAngleSamples; i++)
+        {
+            float angle = currentAngle + Random.Range(minSweep, 360f - minSweep);
+            float clearance = ClearanceAtAngle(context, angle);
+
+            if (clearance > bestClearance)
+            {
+                bestClearance = clearance;
+                best = angle;
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>
+    /// 대기 자리. 기준은 <b>빈 슬롯이 있는 쪽 옆구리</b>(= 링 위에서 x축 방향)이고, 거기서 부채꼴만큼
+    /// 좌우로 벗어난 곳까지 후보로 본다. 빈 자리가 먼 쪽이면 이 목적지 자체가 반대편이 되므로
+    /// 반원 경로가 플레이어를 비켜 돌아 데려다 준다 — 도착하면 그 자리가 곧 "가까운 쪽"이 되어 공격권을 잡는다.
+    ///
+    /// 후보는 그 부채꼴 안에서 <b>랜덤</b>으로 뽑고, 그중 다른 적에게서 가장 멀리 떨어진 곳으로 간다.
+    /// 대기 적이 여럿이면 자연히 부채꼴을 따라 흩어진다.
+    ///
+    /// 간격은 회피 폭에서 포화시킨다 — 그보다 멀리 떨어져 봐야 더 좋아질 게 없다. 그래서 주변이
+    /// 한산하면 후보가 전부 동점이 되고 <b>먼저 뽑힌 랜덤 후보</b>가 이긴다. 이게 중요하다:
+    /// "부채꼴 정면에 가까울수록 좋다" 같은 보정을 얹으면 동점이 항상 같은 각도로 깨져서,
+    /// 플레이어가 멈춰 있는 동안 대기 적도 매번 제자리를 다시 골라 굳어버린다.
+    /// 그러면 멈춰 서서 줄 서 있는 그림이 되는데, 원하는 것은 차례를 기다리며 계속 꿈틀대는 쪽이다.
+    /// </summary>
+    float PickQueueAngle(MeleeEnemyContext context)
+    {
+        float center = context.QueueSideSign >= 0f ? 90f : -90f; // 링 각도는 x = sin, z = cos 기준
+        float spread = Mathf.Clamp(profile.queueSpreadDeg, 0f, 180f);
+        float cap = Mathf.Max(profile.avoidClearance, 0.01f);
+
+        float best = center + Random.Range(-spread, spread);
+        float bestClearance = Mathf.Min(ClearanceAtAngle(context, best), cap);
+
+        for (int i = 1; i < RingAngleSamples; i++)
+        {
+            float angle = center + Random.Range(-spread, spread);
+            float clearance = Mathf.Min(ClearanceAtAngle(context, angle), cap);
+
+            if (clearance > bestClearance)
+            {
+                bestClearance = clearance;
+                best = angle;
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>이 각도의 링 위 지점에서 가장 가까운 다른 적까지의 거리. 비어 있을수록 큰 값.</summary>
+    float ClearanceAtAngle(MeleeEnemyContext context, float angleDeg)
+    {
+        Vector3 spot = context.FlatTargetPosition + AngleToOffset(angleDeg) * profile.orbitRadius;
+        return EnemyCrowd.ClearanceAt(spot, context.Self);
+    }
+
+    /// <summary>링 각도(+z에서 시계 방향, 도)를 xz 평면의 단위 벡터로. +90도가 +x(플레이어의 오른쪽)다.</summary>
+    static Vector3 AngleToOffset(float angleDeg)
+    {
+        float radians = angleDeg * Mathf.Deg2Rad;
+        return new Vector3(Mathf.Sin(radians), 0f, Mathf.Cos(radians));
     }
 
     /// <summary>

@@ -21,6 +21,12 @@ public enum MeleeEnemyTestNode
     Escape,
     [InspectorName("⑦⑧ 피격 분기 (경직 → 넘어졌으면 이탈)")]
     HitBranch,
+    [InspectorName("⑨ 대기 줄 서기 (빈 슬롯 쪽 링으로 조금씩)")]
+    Standby,
+    [InspectorName("⑨ 대기 루프 (대기 / 줄 서기 / 자리 재배치 랜덤)")]
+    StandbyLoop,
+    [InspectorName("⑨ 대기 자리 재배치 (대기 링 위에서 크게 돌기)")]
+    StandbyReposition,
 }
 
 /// <summary>
@@ -99,6 +105,11 @@ public class MeleeEnemyNodeTester : MonoBehaviour, IIntentSource, IMeleeEnemyAID
             Debug.Log($"{name}: 피격 (데미지 {hit.Damage})", this);
     }
 
+    // 실제 AI와 같이 명부에 올린다 — 테스터로 여러 마리를 돌릴 때도 서로의 자리를 피하게.
+    void OnEnable() => EnemyCrowd.Register(transform);
+
+    void OnDisable() => EnemyCrowd.Unregister(transform);
+
     public CharacterIntent GetIntent(float deltaTime)
     {
         if (context == null || aiData == null || target == null)
@@ -159,7 +170,7 @@ public class MeleeEnemyNodeTester : MonoBehaviour, IIntentSource, IMeleeEnemyAID
 
         switch (leaf)
         {
-            case PostAttackWaitNode wait: return $"[대기 {wait.Duration:0.00}초]";
+            case PostAttackWaitNode wait: return $"[{(wait.Purpose == WaitPurpose.Standby ? "대기 중 멈춤" : "대기")} {wait.Duration:0.00}초]";
             case MoveToTargetNode move:   return $"[이동 · {move.Goal}]";
             case MeleeAttackNode _:       return "[근접 공격]";
             case HitStunNode _:           return "[경직]";
@@ -171,7 +182,22 @@ public class MeleeEnemyNodeTester : MonoBehaviour, IIntentSource, IMeleeEnemyAID
     string DescribeSlot()
     {
         if (context.Slots == null) return "슬롯 관리자 없음(항상 허용)";
-        return context.HoldsAttackSlot ? "공격권 보유" : "공격권 없음";
+
+        return context.Slots.TryGetSide(aiData.slotReach, gameObject, out AttackSide side)
+            ? $"공격권 {(side == AttackSide.Right ? "오른쪽" : "왼쪽")}"
+            : "공격권 없음";
+    }
+
+    /// <summary>
+    /// 실제 AI의 대기 전용 루프. 슬롯이 찼을 때 공격 행동 루프 대신 도는 3택이다
+    /// (실제 AI에서는 자리가 빌 때까지 이 표만 반복된다).
+    /// </summary>
+    WeightedRandomNode BuildStandbyLoop()
+    {
+        return new WeightedRandomNode(
+            new WeightedRandomNode.Option(() => aiData.standbyWaitWeight, new PostAttackWaitNode(WaitPurpose.Standby)),
+            new WeightedRandomNode.Option(() => aiData.standbyQueueStepWeight, new MoveToTargetNode(aiData.standby)),
+            new WeightedRandomNode.Option(() => aiData.standbyRepositionWeight, new MoveToTargetNode(aiData.standbyReposition)));
     }
 
     /// <summary>
@@ -210,6 +236,9 @@ public class MeleeEnemyNodeTester : MonoBehaviour, IIntentSource, IMeleeEnemyAID
             case MeleeEnemyTestNode.HitStun: return new HitStunNode();
             case MeleeEnemyTestNode.Escape: return new MoveToTargetNode(aiData.escape);
             case MeleeEnemyTestNode.HitBranch: return BuildHitBranch();
+            case MeleeEnemyTestNode.Standby: return new MoveToTargetNode(aiData.standby);
+            case MeleeEnemyTestNode.StandbyLoop: return BuildStandbyLoop();
+            case MeleeEnemyTestNode.StandbyReposition: return new MoveToTargetNode(aiData.standbyReposition);
             default:                             return new MoveToTargetNode(aiData.approach);
         }
     }

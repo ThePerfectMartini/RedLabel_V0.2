@@ -10,20 +10,38 @@ using UnityEngine;
 /// 제자리 정지는 따로 처리하지 않는다. MoveInput을 건드리지 않으면 그대로 0이고,
 /// 플레이어를 바라보는 것은 <see cref="MeleeEnemyContext.BeginFrame"/>이 이미 깔아 둔다.
 /// </summary>
+public enum WaitPurpose
+{
+    /// <summary>공격 직후의 숨 고르기. 꽤 길게 나올 수 있다.</summary>
+    PostAttack,
+    /// <summary>공격권을 기다리는 동안의 짧은 멈춤. 곧바로 다시 조금 움직인다.</summary>
+    Standby,
+}
+
 public class PostAttackWaitNode : BTNode
 {
+    readonly WaitPurpose purpose;
+
     float duration;
     float elapsed;
 
+    public PostAttackWaitNode(WaitPurpose purpose = WaitPurpose.PostAttack)
+    {
+        this.purpose = purpose;
+    }
+
     /// <summary>이번에 뽑힌 대기 시간(초). 디버그 표시용.</summary>
     public float Duration => duration;
+
+    /// <summary>이 대기가 무엇을 위한 것인지. 디버그 표시용.</summary>
+    public WaitPurpose Purpose => purpose;
 
     protected override void OnEnter(MeleeEnemyContext context)
     {
         elapsed = 0f;
 
-        float min = context.Data.waitDurationMin;
-        float max = context.Data.waitDurationMax;
+        float min = purpose == WaitPurpose.Standby ? context.Data.standbyWaitMin : context.Data.waitDurationMin;
+        float max = purpose == WaitPurpose.Standby ? context.Data.standbyWaitMax : context.Data.waitDurationMax;
         if (min > max) (min, max) = (max, min); // 인스펙터에서 뒤집어 넣어도 동작하게
 
         duration = Random.Range(min, max);

@@ -35,6 +35,10 @@ public class AttackSlotScopeNode : BTNode
         // 고르는 순간과 실제로 시작하는 순간 사이에 다른 적이 채갈 수 있다.
         if (!acquired) return BTStatus.Failure;
 
+        // 접근하는 동안 플레이어가 나를 지나칠 수 있다. 가까워진 쪽이 비어 있으면 그 자리로 옮겨 앉는다
+        // (설계서 7장: 공격권은 유지, 목표 슬롯만 가까운 쪽으로 갱신). 차 있으면 잡은 쪽을 그대로 들고 간다.
+        context.RefreshAttackSlotSide();
+
         return child.Tick(context, deltaTime);
     }
 

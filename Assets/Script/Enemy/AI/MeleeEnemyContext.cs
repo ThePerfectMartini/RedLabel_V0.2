@@ -123,14 +123,82 @@ public class MeleeEnemyContext
         }
     }
 
+    /// <summary>지금 내가 가까운 플레이어의 옆구리.</summary>
+    public AttackSide NearSide => AttackSlots.SideFromSign(NearSideSign);
+
     /// <summary>지금 공격권을 들고 있는지.</summary>
     public bool HoldsAttackSlot => Slots == null || Slots.Holds(Data.slotReach, Self.gameObject);
 
-    /// <summary>지금 공격하러 가도 되는지(빈 자리가 있거나 이미 들고 있는지). 행동 후보를 거를 때 쓴다.</summary>
-    public bool CanTakeAttackSlot => Slots == null || Slots.HasFreeSlot(Data.slotReach, Self.gameObject);
+    /// <summary>
+    /// 공격 접근이 노려야 하는 옆구리의 부호(+1 오른쪽 / -1 왼쪽). 공격권을 들고 있으면 <b>그 슬롯의 쪽</b>이고,
+    /// 아직 없으면 지금 가까운 쪽이다. 잡은 쪽과 가까운 쪽이 어긋나는 것은 잠깐뿐이다 —
+    /// <see cref="RefreshAttackSlotSide"/>가 가까워진 쪽이 비는 대로 옮겨 앉힌다.
+    /// </summary>
+    public float AttackSideSign
+    {
+        get
+        {
+            if (Slots != null && Slots.TryGetSide(Data.slotReach, Self.gameObject, out AttackSide side))
+                return AttackSlots.SignOf(side);
 
-    /// <summary>공격권을 받는다. 이미 들고 있으면 그대로 true. 관리자가 없으면 항상 true.</summary>
-    public bool TryTakeAttackSlot() => Slots == null || Slots.TryAcquire(Data.slotReach, Self.gameObject);
+            return NearSideSign;
+        }
+    }
+
+    /// <summary>
+    /// 지금 공격하러 가도 되는지. <b>가까운 쪽</b> 자리가 비었는지만 본다 —
+    /// 반대쪽이 비어 있어도 접근 단계에서 그걸 잡지는 않는다. 그 자리로 가려면 플레이어를 뚫고
+    /// 지나가야 하기 때문이다. 대신 대기 행동이 반원을 그려 그쪽으로 데려다 준다
+    /// (<see cref="QueueSideSign"/>). 거기 도착하면 그 자리가 곧 "가까운 쪽"이 된다.
+    /// </summary>
+    public bool CanTakeAttackSlot =>
+        Slots == null
+        || Slots.Holds(Data.slotReach, Self.gameObject)
+        || Slots.IsSideFree(Data.slotReach, NearSide, Self.gameObject);
+
+    /// <summary>
+    /// 대기하는 동안 줄 서러 갈 쪽. 비어 있는 자리가 있으면 그쪽이고(먼 쪽이면 반원으로 돌아간다),
+    /// 둘 다 차 있으면 지금 가까운 쪽 바깥에서 기다린다.
+    /// </summary>
+    public float QueueSideSign
+    {
+        get
+        {
+            if (Slots == null) return NearSideSign;
+
+            AttackSide near = NearSide;
+            if (Slots.IsSideFree(Data.slotReach, near, Self.gameObject))
+                return AttackSlots.SignOf(near);
+
+            AttackSide far = AttackSlots.Opposite(near);
+            if (Slots.IsSideFree(Data.slotReach, far, Self.gameObject))
+                return AttackSlots.SignOf(far);
+
+            return NearSideSign;
+        }
+    }
+
+    /// <summary>가까운 쪽 공격권을 받는다. 이미 (어느 쪽이든) 들고 있으면 그대로 true. 관리자가 없으면 항상 true.</summary>
+    public bool TryTakeAttackSlot()
+    {
+        if (Slots == null) return true;
+
+        return Slots.TryAcquire(Data.slotReach, NearSide, Self.gameObject)
+            || Slots.Holds(Data.slotReach, Self.gameObject);
+    }
+
+    /// <summary>
+    /// 접근 도중 플레이어가 나를 지나쳐 좌우가 뒤집혔을 때, 가까워진 쪽이 비어 있으면 그쪽으로 옮겨 앉는다.
+    /// 남이 앉아 있으면 잡은 쪽을 그대로 들고 간다 — 설계서 7장의 "공격권은 유지, 목표 슬롯만 갱신"이다.
+    /// 공격권이 없으면 아무 일도 하지 않는다(여기서 새로 잡지는 않는다).
+    /// </summary>
+    public void RefreshAttackSlotSide()
+    {
+        if (Slots == null) return;
+        if (!Slots.Holds(Data.slotReach, Self.gameObject)) return;
+
+        Slots.TryAcquire(Data.slotReach, NearSide, Self.gameObject);
+    }
 
     /// <summary>공격권 반납. 안 들고 있었으면 아무 일도 없다.</summary>
     public void ReleaseAttackSlot()

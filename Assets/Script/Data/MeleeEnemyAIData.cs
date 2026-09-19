@@ -46,6 +46,9 @@ public enum MoveGoal
     StepBack,
     [InspectorName("이탈 (플레이어 반대, 벽에 막히면 트인 쪽으로)")]
     Escape,
+
+    [InspectorName("대기 자리 (빈 슬롯 쪽 옆구리, 남과 안 겹치는 곳)")]
+    QueueSpot,
 }
 
 /// <summary>
@@ -100,6 +103,11 @@ public class MoveProfile
     [Tooltip("'원호' 경로 전용. 목적지까지 직선으로 갈 때 플레이어와 이 거리보다 가깝게 스쳐 지나가게 되면, " +
              "뚫고 가지 않고 원호를 그려 비켜 간다. 길이 비어 있으면 그냥 직선으로 간다. 0이면 항상 직선.")]
     public float avoidClearance = 1.5f;
+
+    [KoreanLabel("대기 자리 부채꼴(도)")]
+    [Tooltip("'대기 자리' 목표 전용. 빈 슬롯이 있는 옆구리 정면에서 좌우로 이만큼까지 벗어난 곳도 후보로 본다. " +
+             "0이면 항상 옆구리 정면이라 대기 적이 여럿일 때 한 점에 몰리고, 크게 잡을수록 링을 따라 넓게 흩어진다.")]
+    public float queueSpreadDeg = 60f;
 
     [KoreanLabel("재정렬 최소 이동 각도(도)")]
     [Tooltip("'원 둘레의 한 점' 목표 전용. 지금 내가 있는 각도에서 최소한 이만큼은 떨어진 점을 고른다. " +
@@ -185,6 +193,49 @@ public class MeleeEnemyAIData : ScriptableObject
         timeout = 1.5f,
     };
 
+    // ===== 대기 공간 =====
+    // 공격권을 못 받은 적이 머무는 곳. 공격 위치('트리거 범위 중심 거리' = 기본 1.5)보다 확실히 바깥에 두어
+    // 싸우는 둘과 기다리는 나머지가 눈으로 구분되게 한다. 아래 두 프로필의 '원 반지름'이 그 링이고,
+    // <b>둘을 같은 값으로 맞춰 두어야</b> 대기 중에 안팎으로 들락거리지 않는다.
+
+    [Header("이동 — 대기 중 줄 서기 (느림 · 실시간 · 반원)")]
+    [KoreanLabel("대기 줄 서기")]
+    [Tooltip("빈 슬롯이 있는 쪽 링으로 조금씩 옮겨 가며 차례를 기다린다. " +
+             "'이동 거리 제한'이 한 번에 가는 거리라 짧게 끊어 간다.")]
+    public MoveProfile standby = new MoveProfile
+    {
+        goal = MoveGoal.QueueSpot,
+        speed = 2.5f,
+        tracking = MoveTracking.Realtime,
+        path = MovePath.SemiCircle,
+        orbitRadius = 4f,
+        avoidClearance = 1.5f,
+        queueSpreadDeg = 60f,
+        arrivalTolerance = 0.2f,
+        stopAfterDistance = 1.2f,
+        timeout = 3f,
+    };
+
+    [Header("이동 — 대기 중 자리 재배치 (보통 · 실시간 · 반원)")]
+    [KoreanLabel("대기 자리 재배치")]
+    [Tooltip("대기 링 위에서 다른 각도로 옮겨 간다. 줄 서기와 달리 빈 슬롯 쪽을 노리지 않고 링을 따라 돈다 " +
+             "— 기다리는 적들이 한곳에 고이지 않게 하는 쪽이다. '원 반지름'을 대기 줄 서기와 같게 맞출 것.\n\n" +
+             "'이동 거리 제한'을 반드시 걸어 둘 것. 행동 선택은 행동이 <b>끝날 때만</b> 다시 하므로, " +
+             "링을 한 바퀴 다 돌게 두면 그 몇 초 동안 슬롯이 비어도 들어가지 못한다.")]
+    public MoveProfile standbyReposition = new MoveProfile
+    {
+        goal = MoveGoal.OrbitPoint,
+        speed = 3f,
+        tracking = MoveTracking.Realtime,
+        path = MovePath.SemiCircle,
+        orbitRadius = 4f,
+        avoidClearance = 1.5f,
+        repositionMinSweep = 60f,
+        arrivalTolerance = 0.4f,
+        stopAfterDistance = 2.5f, // 링 위 호가 아니라 시작점에서의 직선 거리. 반지름 4에서 약 36도
+        timeout = 4f,
+    };
+
     [KoreanLabel("느린 이동 전진 전환 거리")]
     [Tooltip("공격 후 느린 이동을 시작할 때 플레이어와의 거리가 이 값보다 멀면 물러나는 대신 플레이어 쪽으로 다가간다. " +
              "(설계서 8장의 '가까우면 뒤로, 이미 멀면 플레이어 쪽으로'를 가르는 기준. 10장 표에는 없던 값이라 임의로 잡았다.)")]
@@ -252,13 +303,24 @@ public class MeleeEnemyAIData : ScriptableObject
     [KoreanLabel("자리 재정렬")]
     public float nearRepositionWeight = 35f;
 
-    [Header("랜덤 — 행동 선택 가중치 (슬롯이 모두 찼을 때)")]
+    [Header("랜덤 — 대기 루프 가중치 (슬롯이 차서 못 들어갈 때)")]
     [KoreanLabel("제자리 대기")]
-    public float blockedWaitWeight = 35f;
+    [Tooltip("공격 행동 루프 대신 도는 대기 전용 3택. 여기 셋 중 무엇이 뽑혀도 적은 대기 링을 벗어나지 않는다. " +
+             "'제자리 대기'를 크게 잡을수록 정적으로, 작게 잡을수록 계속 꿈틀대는 것처럼 보인다.")]
+    public float standbyWaitWeight = 25f;
 
-    [KoreanLabel("느린 이동")]
-    public float blockedSlowStepWeight = 30f;
+    [KoreanLabel("빈 슬롯 쪽으로 줄 서기")]
+    public float standbyQueueStepWeight = 45f;
 
-    [KoreanLabel("자리 재정렬")]
-    public float blockedRepositionWeight = 35f;
+    [KoreanLabel("자리 재배치")]
+    public float standbyRepositionWeight = 30f;
+
+    [Header("랜덤 — 대기 중 제자리 대기 시간")]
+    [KoreanLabel("대기 시간 최소(초)")]
+    [Tooltip("대기 루프에서 '제자리 대기'가 뽑혔을 때의 시간. 공격 후 대기보다 훨씬 짧게 잡아야 " +
+             "멈춰 서서 줄 서 있는 것처럼 보이지 않는다.")]
+    public float standbyWaitMin = 0.1f;
+
+    [KoreanLabel("대기 시간 최대(초)")]
+    public float standbyWaitMax = 0.5f;
 }
