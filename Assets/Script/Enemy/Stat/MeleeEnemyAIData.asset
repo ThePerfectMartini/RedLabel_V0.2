@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08eed489e0dcc94488eb8bac5208bd02, type: 3}
+  m_Name: MeleeEnemyAIData
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeEnemyAIData
+  approach:
+    goal: 0
+    speed: 4
+    tracking: 1
+    trackingRefreshInterval: 0.1
+    path: 1
+    zTurnBlend: 0
+    zPriorityThreshold: 0.3
+    turnRateDegPerSecond: 180
+    orbitRadius: 3
+    avoidClearance: 1.5
+    repositionMinSweep: 90
+    arrivalTolerance: 0.15
+    stopAfterDistance: 0
+    timeout: 30
+  reposition:
+    goal: 1
+    speed: 7
+    tracking: 1
+    trackingRefreshInterval: 0.5
+    path: 2
+    zTurnBlend: 0
+    zPriorityThreshold: 1
+    turnRateDegPerSecond: 360
+    orbitRadius: 4.38
+    avoidClearance: 1.5
+    repositionMinSweep: 90
+    arrivalTolerance: 0.4
+    stopAfterDistance: 0
+    timeout: 3
+  slowStep:
+    goal: 2
+    speed: 2
+    tracking: 2
+    trackingRefreshInterval: 0.15
+    path: 0
+    zTurnBlend: 0
+    zPriorityThreshold: 0.3
+    turnRateDegPerSecond: 360
+    orbitRadius: 3
+    avoidClearance: 1.5
+    repositionMinSweep: 90
+    arrivalTolerance: 0.15
+    stopAfterDistance: 1.5
+    timeout: 3
+  escape:
+    goal: 3
+    speed: 9
+    tracking: 2
+    trackingRefreshInterval: 0.15
+    path: 0
+    zTurnBlend: 0
+    zPriorityThreshold: 1.5
+    turnRateDegPerSecond: 720
+    orbitRadius: 3
+    avoidClearance: 1.5
+    repositionMinSweep: 90
+    arrivalTolerance: 0.15
+    stopAfterDistance: 6
+    timeout: 1.5
+  slowStepForwardDistance: 3
+  meleeAttack: {fileID: 11400000, guid: d0d9e1f2a3b4c5d6e7f8091a2b3c4d5e, type: 2}
+  slotReach: 0
+  attackStartTimeout: 1
+  triggerCenterDistance: 1.5
+  triggerRangeSize: {x: 0.6, y: 0.4}
+  jumpDashMinDistance: 4
+  waitDurationMin: 0.2
+  waitDurationMax: 1.5
+  postAttackWaitWeight: 50
+  postAttackSlowStepWeight: 50
+  farMeleeWeight: 50
+  farJumpDashWeight: 25
+  farRepositionWeight: 25
+  nearMeleeWeight: 65
+  nearRepositionWeight: 35
+  blockedWaitWeight: 35
+  blockedSlowStepWeight: 30
+  blockedRepositionWeight: 35

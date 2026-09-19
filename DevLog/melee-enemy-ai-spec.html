@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>일반 근접 적 행동 AI 설계서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f5f2; --paper:#ffffff; --ink:#1f2a24; --ink-2:#55635b; --line:#d5dcd6;
+  --gob:#3d8a4e; --gob-soft:#dff0e2;
+  --player:#d98a1c; --player-soft:#fbead0;
+  --move:#2f6fb0; --move-soft:#dde9f7;
+  --wait:#7a8a80; --wait-soft:#e7ebe8;
+  --hit:#c23b3b; --hit-soft:#f8dede;
+  --code:#eef1ee;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#151a17; --paper:#1d2420; --ink:#e6ebe7; --ink-2:#a2ada6; --line:#34403a;
+    --gob:#6cc481; --gob-soft:#22392a;
+    --player:#f0a93c; --player-soft:#3d2f17;
+    --move:#6ea4e0; --move-soft:#1e2e40;
+    --wait:#9aa8a0; --wait-soft:#2a322e;
+    --hit:#e46b6b; --hit-soft:#3f2222;
+    --code:#242c27;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151a17; --paper:#1d2420; --ink:#e6ebe7; --ink-2:#a2ada6; --line:#34403a;
+  --gob:#6cc481; --gob-soft:#22392a;
+  --player:#f0a93c; --player-soft:#3d2f17;
+  --move:#6ea4e0; --move-soft:#1e2e40;
+  --wait:#9aa8a0; --wait-soft:#2a322e;
+  --hit:#e46b6b; --hit-soft:#3f2222;
+  --code:#242c27;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.7;font-size:16px}
+.wrap{max-width:860px;margin:0 auto;padding:40px 20px 80px}
+h1{font-size:2.2rem;font-weight:900;line-height:1.2;margin:0 0 8px;letter-spacing:-.02em}
+.sub{color:var(--ink-2);margin:0 0 36px;font-size:1.02rem}
+h2{font-size:1.45rem;font-weight:700;margin:56px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--line);letter-spacing:-.01em}
+h3{font-size:1.1rem;font-weight:700;margin:26px 0 8px}
+p{margin:0 0 12px}
+ul,ol{margin:0 0 12px;padding-left:22px}
+li{margin:3px 0}
+.note{background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--gob);padding:14px 18px;border-radius:6px;margin:16px 0}
+.fig{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px;margin:18px 0;overflow-x:auto}
+.fig svg{display:block;width:100%;max-width:100%;height:auto}
+.cap{color:var(--ink-2);font-size:.9rem;margin:8px 4px 0}
+pre.mermaid{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px;margin:18px 0;overflow-x:auto}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:.95rem;background:var(--paper)}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--code);font-weight:700}
+.tbl{overflow-x:auto}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;margin:12px 0 4px;font-size:.92rem}
+.legend span::before{content:"";display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:6px;vertical-align:-2px}
+.l-move::before{background:var(--move)} .l-atk::before{background:var(--gob)} .l-wait::before{background:var(--wait)} .l-hit::before{background:var(--hit)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:8px;margin:18px 0;overflow:hidden}
+.card header{padding:10px 18px;font-weight:700;font-size:1.05rem;color:#fff}
+.card.move header{background:var(--move)} .card.atk header{background:var(--gob)} .card.wait header{background:var(--wait)} .card.hit header{background:var(--hit)}
+.card .body{padding:12px 18px 6px}
+.card dl{display:grid;grid-template-columns:110px 1fr;gap:6px 14px;margin:0 0 8px}
+.card dt{font-weight:700;color:var(--ink-2)}
+.card dd{margin:0}
+@media (max-width:520px){.card dl{grid-template-columns:1fr}.card dt{margin-top:6px}}
+.prompt{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:16px 18px;white-space:pre-wrap;font-family:inherit;font-size:.95rem;line-height:1.65;margin:14px 0}
+.tag{display:inline-block;background:var(--gob-soft);color:var(--gob);padding:1px 8px;border-radius:12px;font-size:.85rem;font-weight:700;margin-right:4px}
+.tag.p{background:var(--player-soft);color:var(--player)}
+.tag.m{background:var(--move-soft);color:var(--move)}
+.tag.w{background:var(--wait-soft);color:var(--wait)}
+.tag.h{background:var(--hit-soft);color:var(--hit)}
+.toc{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px 20px;margin:0 0 20px}
+.toc ol{margin:0;columns:2;column-gap:30px}
+@media (max-width:600px){.toc ol{columns:1}}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a:hover{text-decoration:underline}
+</style>
+<script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"; mermaid.initialize({startOnLoad:true, theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default"});</script>
+</head>
+<body>
+<div class="wrap">
+
+<h1>일반 근접 적 행동 AI 설계서</h1>
+<p class="sub">기존 프로젝트의 "어떤 행동을 할지 정하는" AI 계층을 위한 설계 문서. 코드는 없고 행동 루프의 논리만 설명한다.</p>
+
+<div class="toc">
+<ol>
+<li><a href="#s1">전제와 범위</a></li>
+<li><a href="#s2">근접 적 한눈에 보기</a></li>
+<li><a href="#s3">전체 행동 루프</a></li>
+<li><a href="#s4">행동 카드 (8종)</a></li>
+<li><a href="#s5">이동의 세 가지 방식</a></li>
+<li><a href="#s6">공격 범위의 2겹 구조</a></li>
+<li><a href="#s7">공격 슬롯</a></li>
+<li><a href="#s8">행동 선택 규칙</a></li>
+<li><a href="#s9">비헤이비어 트리 골격</a></li>
+<li><a href="#s10">파라미터 목록</a></li>
+<li><a href="#s11">확정된 규칙</a></li>
+<li><a href="#s12">클로드 코드용 프롬프트</a></li>
+</ol>
+</div>
+
+<h2 id="s1">1. 전제와 범위</h2>
+<p>기존 프로젝트에는 플레이어, 적의 공격 판정, 피격 처리 같은 골자가 이미 있다. 이 문서가 다루는 것은 그 위에 얹을 <strong>의사결정 계층</strong>뿐이다. 즉 "지금 뭘 할지 고르고, 그 행동이 끝나면 다음 행동을 고르는" 부분이다.</p>
+<div class="note">
+<strong>구조상 전제</strong><br>
+벨트스크롤 액션이라 전투 중 화면이 고정되고, 화면 안의 적을 전부 잡아야 다음으로 넘어간다. 그래서 이 적에게는 순찰·대기 같은 초기 상태가 없고, 추격 포기 거리도 없다. 스폰되는 순간부터 플레이어를 목표로 행동 루프에 들어간다.
+</div>
+<p>축 표기는 벨트스크롤 기준으로 <strong>가로 = x</strong>, <strong>깊이(위아래 레인) = z</strong>로 쓴다.</p>
+
+<h2 id="s2">2. 근접 적 한눈에 보기</h2>
+<div class="tbl"><table>
+<tr><th>항목</th><th>내용</th></tr>
+<tr><td>무기</td><td>근접 무기 (리치 짧음)</td></tr>
+<tr><td>공격 종류</td><td>근접 찌르기 / 점프대쉬</td></tr>
+<tr><td>이동속도</td><td>빠름</td></tr>
+<tr><td>성향</td><td>공격적 — 대기 시간이 짧게 나오는 경우가 많음</td></tr>
+<tr><td>공격 위치</td><td>항상 플레이어의 <strong>왼쪽 또는 오른쪽 옆</strong>에 붙어서 공격</td></tr>
+<tr><td>피격 반응</td><td>피격 시 현재 행동이 즉시 끊김</td></tr>
+</table></div>
+<p>리치가 더 길거나 느리고 신중한 변형 적은 이 로직을 그대로 두고 <strong>속도·가중치·리치 파라미터만</strong> 바꿔서 만든다.</p>
+
+<h2 id="s3">3. 전체 행동 루프</h2>
+<p>관찰된 루프를 한 바퀴로 그리면 아래와 같다. 큰 흐름은 <strong>접근 → 공격 → 공격 후 숨 고르기 → 다음 행동 선택</strong>이고, 피격은 어느 지점에서든 끼어든다.</p>
+
+<div class="legend"><span class="l-move">이동</span><span class="l-atk">공격</span><span class="l-wait">대기·후퇴</span><span class="l-hit">인터럽트</span></div>
+
+<pre class="mermaid">
+stateDiagram-v2
+    direction TB
+    [*] --> 행동선택 : 스폰
+    행동선택 --> 공격접근 : 근접 또는 점프대쉬 선택
+    행동선택 --> 자리재정렬 : 재정렬 선택
+    공격접근 --> 근접공격 : 트리거 범위 진입 (근거리)
+    공격접근 --> 점프대쉬 : 발동 거리 조건 (원거리)
+    근접공격 --> 공격후행동
+    점프대쉬 --> 공격후행동
+    공격후행동 --> 행동선택 : 시간·거리 조건 종료
+    자리재정렬 --> 행동선택 : 목표 위치 도달
+    state 공격후행동 {
+        direction LR
+        제자리대기
+        느린이동
+    }
+    피격 --> 이탈점프 : 경직 종료
+    이탈점프 --> 행동선택 : 착지
+    note right of 피격 : 어느 상태에서든 피격 시 즉시 진입
+    note right of 이탈점프 : 플레이어 반대쪽으로 빠르게 점프
+</pre>
+<p class="cap">그림 1. 상태 순환. 공격 후 행동은 "제자리 대기"와 "느린 이동" 둘 중 하나가 확률로 선택된다. 피격 시에는 경직 → 이탈 점프를 거쳐 다시 행동 선택으로 돌아온다.</p>
+
+<h2 id="s4">4. 행동 카드 (8종)</h2>
+<p>각 행동을 하나의 독립 노드로 보고, <em>언제 시작하는지 / 무엇을 하는지 / 어떻게 움직이는지 / 언제 끝나는지</em>를 정리했다. 기존 방침대로 하나씩 만들고 따로 테스트할 수 있도록 서로 의존하지 않게 나눴다.</p>
+
+<div class="card move"><header>① 공격 접근 (Approach)</header><div class="body">
+<dl>
+<dt>시작 조건</dt><dd>행동 선택에서 근접공격 또는 점프대쉬가 뽑혔을 때</dd>
+<dt>하는 일</dt><dd>플레이어가 자신의 <strong>공격 트리거 범위 중심</strong>에 들어오도록 이동한다</dd>
+<dt>속도</dt><dd><span class="tag m">빠름</span> 세 이동 중 가장 빠름</dd>
+<dt>목표 추적</dt><dd><span class="tag m">지연 실시간</span> 플레이어를 계속 따라가지만 아주 살짝 반응이 늦다. 매 프레임 정확히 붙는 게 아니라 조금 뒤처져 따라오는 느낌</dd>
+<dt>경로</dt><dd><strong>ㄱ자형 급격한 곡선.</strong> 먼저 한 축(주로 z, 깊이)을 플레이어와 맞추고 그다음 꺾어 들어온다. 이미 z가 맞아 있으면 바로 직진. 플레이어와 위아래로 나란히 있을 때도 한 축을 먼저 맞추는 가파른 곡선을 그린다. 직선 두 개를 이어 붙인 것이 아니라 "급하게 꺾이는 곡선"이다</dd>
+<dt>종료 조건</dt><dd>플레이어가 트리거 범위 중심에 들어옴 → 공격으로 넘어감. 점프대쉬가 예약된 경우엔 발동 거리에 도달하면 바로 점프</dd>
+</dl></div></div>
+
+<div class="card atk"><header>② 근접 공격 (Melee)</header><div class="body">
+<dl>
+<dt>시작 조건</dt><dd>플레이어가 트리거 범위 중심에 있고, 근접 슬롯에 <strong>빈 자리(공격권)</strong>가 있을 때</dd>
+<dt>하는 일</dt><dd>플레이어의 왼쪽 또는 오른쪽 옆에서 찌른다. 방향은 그 순간 가까운 쪽</dd>
+<dt>이동</dt><dd><span class="tag w">정지</span> 공격 애니메이션이 재생되는 동안 완전히 멈춘다. 중간 취소 없음(커밋형)</dd>
+<dt>종료 조건</dt><dd>애니메이션 종료 → 공격 후 행동으로. 공격권 반납</dd>
+</dl></div></div>
+
+<div class="card atk"><header>③ 점프대쉬 공격 (Jump Dash)</header><div class="body">
+<dl>
+<dt>시작 조건</dt><dd>플레이어가 <strong>일정 거리 이상 떨어져</strong> 있을 때만. 근접 거리에서는 절대 나오지 않는다</dd>
+<dt>하는 일</dt><dd>떨어진 위치에서 플레이어가 있는 곳으로 점프하며 공격</dd>
+<dt>슬롯</dt><dd>슬롯을 차지하지 않는다</dd>
+<dt>이동</dt><dd>공격 자체가 이동을 포함한다. <span class="tag w">스냅샷</span> 점프 시작 순간의 플레이어 위치를 목표로 하며 <strong>공중 보정은 없다</strong></dd>
+<dt>종료 조건</dt><dd>착지 및 애니메이션 종료 → 공격 후 행동으로</dd>
+</dl></div></div>
+
+<div class="card wait"><header>④ 공격 후 대기 (Post-Attack Wait)</header><div class="body">
+<dl>
+<dt>시작 조건</dt><dd>공격 직후, 공격 후 행동 2택 중 "대기"가 뽑혔을 때</dd>
+<dt>하는 일</dt><dd>제자리에 서 있는다</dd>
+<dt>시간</dt><dd>고정값이 아니라 <strong>범위 안에서 랜덤</strong>. 아주 짧게 있다가 바로 다시 공격하기도 하고, 꽤 기다리기도 한다</dd>
+<dt>종료 조건</dt><dd>대기 시간 경과 → 행동 선택으로</dd>
+</dl></div></div>
+
+<div class="card wait"><header>⑤ 공격 후 느린 이동 (Post-Attack Slow Step)</header><div class="body">
+<dl>
+<dt>시작 조건</dt><dd>공격 직후, 공격 후 행동 2택 중 "느린 이동"이 뽑혔을 때</dd>
+<dt>하는 일</dt><dd>느린 속도로 일정 거리 이동한다. 보통은 뒤로 물러나는 후퇴처럼 보이지만, 플레이어가 공격을 피하고 이미 멀어져 있으면 오히려 플레이어 쪽으로 잠시 다가간다</dd>
+<dt>속도</dt><dd><span class="tag w">느림</span> 세 이동 중 가장 느림</dd>
+<dt>목표 추적</dt><dd><span class="tag w">스냅샷</span> 행동 시작 순간에 목표 좌표를 <strong>한 번만</strong> 찍고, 그 뒤 플레이어가 어디로 가든 무시하고 그 좌표로만 간다</dd>
+<dt>종료 조건</dt><dd><strong>정해진 거리만큼</strong> 이동하면 종료 → 행동 선택으로 (시간 기준 아님)</dd>
+</dl></div></div>
+
+<div class="card move"><header>⑥ 자리 재정렬 (Reposition)</header><div class="body">
+<dl>
+<dt>시작 조건</dt><dd>행동 선택에서 "재정렬"이 뽑혔을 때. 슬롯이 모두 찼을 때도 비공격 행동 후보(대기 / 느린 이동 / 재정렬) 중 하나로 뽑힌다</dd>
+<dt>하는 일</dt><dd>플레이어와 안전해 보이는 일정 거리를 유지하며 <strong>반원을 그리듯 빙 돌아</strong> 반대편(오른쪽에 있었으면 왼쪽)으로 간다. 보통 목적은 거리 확보, 가끔은 좌우 스위칭</dd>
+<dt>속도</dt><dd><span class="tag m">보통</span> 후퇴보다 빠르고 공격 접근보다 느림</dd>
+<dt>목표 추적</dt><dd><span class="tag m">실시간</span> 스냅샷이 아니라 플레이어 위치를 보며 움직인다</dd>
+<dt>종료 조건</dt><dd>목표 지점(플레이어 반대편, 일정 거리) 도달 → 행동 선택으로</dd>
+</dl></div></div>
+
+<div class="card hit"><header>⑦ 피격 (Hit Stun)</header><div class="body">
+<dl>
+<dt>시작 조건</dt><dd>플레이어 공격에 맞았을 때. <strong>어떤 행동 중이든</strong> 즉시 끼어든다</dd>
+<dt>하는 일</dt><dd>현재 행동을 버리고 경직 애니메이션 재생. (피격 판정 자체는 기존 프로젝트에 있으므로 여기서는 "행동을 끊고 다시 고르게 한다"는 것만 담당)</dd>
+<dt>종료 조건</dt><dd>경직 종료 → <strong>이탈 점프</strong>로. 끊긴 행동을 이어서 하지 않는다</dd>
+</dl></div></div>
+
+<div class="card hit"><header>⑧ 이탈 점프 (Hit Escape Jump)</header><div class="body">
+<dl>
+<dt>시작 조건</dt><dd>피격 경직이 끝난 직후. 피격 뒤에는 항상 이 행동이 따라온다</dd>
+<dt>하는 일</dt><dd>플레이어에게서 <strong>멀어지는 방향으로 점프</strong>해 빠르게 거리를 벌린다</dd>
+<dt>속도</dt><dd><span class="tag h">매우 빠름</span> 점프 이동이라 일반 이동보다 빠르다</dd>
+<dt>목표 추적</dt><dd><span class="tag h">스냅샷</span> 점프 시작 순간의 플레이어 위치 기준으로 반대 방향을 잡는다</dd>
+<dt>벽 처리</dt><dd>반대 방향이 벽에 막혀 있으면 그쪽을 버리고 <strong>다른 방향 중 멀리 갈 수 있는 쪽</strong>으로 점프한다</dd>
+<dt>종료 조건</dt><dd>착지 → 행동 선택으로. 복귀 후 행동은 <strong>완전 랜덤</strong>이며 직전 행동과 무관하다</dd>
+</dl></div></div>
+
+<h2 id="s5">5. 이동의 세 가지 방식</h2>
+<p>이동하는 행동이 넷(공격 접근, 자리 재정렬, 느린 이동, 이탈 점프)인데, 각각 <strong>속도</strong>와 <strong>목표를 어떻게 추적하는지</strong>가 다르다. 이 두 가지를 파라미터로 빼면 이동 노드 하나로 앞의 셋을 표현할 수 있다. 이탈 점프는 점프대쉬와 같은 "점프 이동" 계열이라 그쪽과 묶는다.</p>
+
+<div class="tbl"><table>
+<tr><th>이동</th><th>속도</th><th>목표 추적 방식</th><th>경로 모양</th></tr>
+<tr><td>공격 접근</td><td>빠름</td><td>지연 실시간 (살짝 늦게 따라감)</td><td>ㄱ자 급곡선</td></tr>
+<tr><td>자리 재정렬</td><td>보통</td><td>실시간</td><td>반원</td></tr>
+<tr><td>공격 후 느린 이동</td><td>느림</td><td>스냅샷 (시작 시 좌표 1회 고정)</td><td>직선</td></tr>
+<tr><td>피격 후 이탈 점프</td><td>매우 빠름 (점프)</td><td>스냅샷 (플레이어 반대 방향)</td><td>점프 포물선</td></tr>
+</table></div>
+
+<div class="fig">
+<svg viewBox="0 0 860 300" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif" font-size="13">
+  <!-- panel 1: snapshot -->
+  <g transform="translate(10,10)">
+    <rect x="0" y="0" width="270" height="280" rx="8" fill="none" stroke="var(--line)"/>
+    <text x="14" y="26" font-weight="700" fill="var(--ink)">스냅샷 — 느린 이동</text>
+    <!-- player start -->
+    <circle cx="200" cy="90" r="11" fill="var(--player)" opacity=".35"/>
+    <text x="200" y="72" text-anchor="middle" fill="var(--ink-2)">플레이어(시작 시)</text>
+    <!-- player moved -->
+    <circle cx="80" cy="230" r="11" fill="var(--player)"/>
+    <text x="80" y="256" text-anchor="middle" fill="var(--ink-2)">플레이어(이동 후)</text>
+    <path d="M190 100 Q140 170 90 222" stroke="var(--player)" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
+    <!-- goblin -->
+    <rect x="60" y="80" width="22" height="22" rx="4" fill="var(--gob)"/>
+    <!-- snapshot target -->
+    <g stroke="var(--wait)" stroke-width="2"><line x1="130" y1="82" x2="150" y2="102"/><line x1="150" y1="82" x2="130" y2="102"/></g>
+    <text x="140" y="120" text-anchor="middle" fill="var(--ink-2)">고정된 목표 좌표</text>
+    <line x1="84" y1="91" x2="126" y2="91" stroke="var(--wait)" stroke-width="3" marker-end="url(#aw)"/>
+    <text x="14" y="200" fill="var(--ink-2)" font-size="12">플레이어가 움직여도</text>
+    <text x="14" y="218" fill="var(--ink-2)" font-size="12">×표로만 간다</text>
+  </g>
+  <!-- panel 2: delayed live -->
+  <g transform="translate(295,10)">
+    <rect x="0" y="0" width="270" height="280" rx="8" fill="none" stroke="var(--line)"/>
+    <text x="14" y="26" font-weight="700" fill="var(--ink)">지연 실시간 — 공격 접근</text>
+    <circle cx="200" cy="90" r="11" fill="var(--player)" opacity=".35"/>
+    <circle cx="140" cy="200" r="11" fill="var(--player)"/>
+    <path d="M195 100 Q170 150 150 190" stroke="var(--player)" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
+    <rect x="40" y="60" width="22" height="22" rx="4" fill="var(--gob)"/>
+    <!-- goblin path chases, lagging -->
+    <path d="M62 71 C110 71 150 95 150 120 C150 140 145 170 135 185" stroke="var(--move)" stroke-width="3" fill="none" marker-end="url(#am)"/>
+    <text x="14" y="240" fill="var(--ink-2)" font-size="12">플레이어를 계속 따라가지만</text>
+    <text x="14" y="258" fill="var(--ink-2)" font-size="12">조금 뒤처진 위치를 향한다</text>
+  </g>
+  <!-- panel 3: live -->
+  <g transform="translate(580,10)">
+    <rect x="0" y="0" width="270" height="280" rx="8" fill="none" stroke="var(--line)"/>
+    <text x="14" y="26" font-weight="700" fill="var(--ink)">실시간 — 자리 재정렬</text>
+    <circle cx="135" cy="150" r="11" fill="var(--player)"/>
+    <text x="135" y="176" text-anchor="middle" fill="var(--ink-2)">플레이어</text>
+    <circle cx="135" cy="150" r="70" fill="none" stroke="var(--line)" stroke-dasharray="3 5"/>
+    <rect x="194" y="139" width="22" height="22" rx="4" fill="var(--gob)"/>
+    <path d="M205 135 A70 70 0 0 0 65 150" stroke="var(--move)" stroke-width="3" fill="none" marker-end="url(#am)"/>
+    <text x="14" y="240" fill="var(--ink-2)" font-size="12">거리를 유지하며 위로 반원을 그려</text>
+    <text x="14" y="258" fill="var(--ink-2)" font-size="12">반대편으로 이동</text>
+  </g>
+  <defs>
+    <marker id="aw" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--wait)"/></marker>
+    <marker id="am" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--move)"/></marker>
+  </defs>
+</svg>
+<p class="cap">그림 2. 세 가지 목표 추적 방식. 초록 사각형이 적, 주황 원이 플레이어.</p>
+</div>
+
+<h3>ㄱ자 추격 경로</h3>
+<p>공격 접근은 완만한 곡선이 아니라 <strong>한 축을 먼저 맞추고 급하게 꺾는</strong> 모양이다. 구현 관점에서는 "z 차이가 임계값보다 크면 z를 우선으로 이동, 작아지면 x로 넘어간다"를 부드럽게 섞으면 이 곡선이 나온다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 860 260" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif" font-size="13">
+  <!-- ground plane -->
+  <rect x="20" y="30" width="820" height="200" fill="var(--code)" rx="6"/>
+  <text x="30" y="52" fill="var(--ink-2)" font-size="12">z (깊이, 화면 위쪽 = 멀리)</text>
+  <text x="790" y="222" fill="var(--ink-2)" font-size="12">x (가로)</text>
+  <!-- lanes -->
+  <line x1="20" y1="80" x2="840" y2="80" stroke="var(--line)" stroke-dasharray="2 6"/>
+  <line x1="20" y1="130" x2="840" y2="130" stroke="var(--line)" stroke-dasharray="2 6"/>
+  <line x1="20" y1="180" x2="840" y2="180" stroke="var(--line)" stroke-dasharray="2 6"/>
+  <!-- case A: different z -->
+  <g>
+    <rect x="80" y="169" width="22" height="22" rx="4" fill="var(--gob)"/>
+    <circle cx="330" cy="80" r="11" fill="var(--player)"/>
+    <path d="M91 168 C91 120 96 90 130 82 L300 80" stroke="var(--move)" stroke-width="3.5" fill="none" marker-end="url(#am2)"/>
+    <text x="150" y="215" fill="var(--ink)" font-size="12">A. z가 다르면 z부터 맞추고 꺾어 들어온다</text>
+  </g>
+  <!-- case B: same z -->
+  <g>
+    <rect x="470" y="119" width="22" height="22" rx="4" fill="var(--gob)"/>
+    <circle cx="700" cy="130" r="11" fill="var(--player)"/>
+    <line x1="494" y1="130" x2="672" y2="130" stroke="var(--move)" stroke-width="3.5" marker-end="url(#am2)"/>
+    <text x="500" y="215" fill="var(--ink)" font-size="12">B. z가 이미 같으면 그대로 직진</text>
+  </g>
+  <defs>
+    <marker id="am2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--move)"/></marker>
+  </defs>
+</svg>
+<p class="cap">그림 3. 공격 접근의 경로. A에서 꺾이는 부분은 직각이 아니라 급한 곡선이다.</p>
+</div>
+
+<h2 id="s6">6. 공격 범위의 2겹 구조</h2>
+<p>관찰상 공격에는 범위가 두 개 겹쳐 있다.</p>
+<ul>
+<li><strong>트리거 범위</strong> — 플레이어가 이 안(중심부의 일정 영역)에 들어와야 공격이 <em>시작</em>된다. 공격 접근의 목표 지점이 바로 이 범위의 중심이다.</li>
+<li><strong>히트 범위</strong> — 실제로 무기가 닿는 판정 영역. 직사각형. 트리거 범위보다 넓다.</li>
+</ul>
+<p>둘을 나눠 두면 "공격은 시작했는데 플레이어가 살짝 빠져나가 빗나가는" 느낌이 재현된다. 히트 판정은 기존 프로젝트에 있으므로 AI 계층에서는 <strong>트리거 범위만</strong> 다루면 된다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 860 240" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif" font-size="13">
+  <g transform="translate(180,20)">
+    <!-- goblin -->
+    <rect x="0" y="80" width="40" height="40" rx="6" fill="var(--gob)"/>
+    <text x="20" y="145" text-anchor="middle" fill="var(--ink-2)">적</text>
+    <!-- hit box -->
+    <rect x="50" y="40" width="300" height="120" fill="var(--gob)" opacity=".13" stroke="var(--gob)" stroke-width="2"/>
+    <text x="200" y="30" text-anchor="middle" fill="var(--gob)" font-weight="700">히트 범위 (실제 타격 판정)</text>
+    <!-- trigger zone -->
+    <rect x="150" y="70" width="100" height="60" fill="var(--gob)" opacity=".28" stroke="var(--gob)" stroke-width="2" stroke-dasharray="5 4"/>
+    <text x="200" y="182" text-anchor="middle" fill="var(--gob)" font-weight="700">트리거 범위 (공격 시작 조건)</text>
+    <!-- player -->
+    <circle cx="200" cy="100" r="12" fill="var(--player)"/>
+    <text x="200" y="122" text-anchor="middle" fill="var(--player)" font-size="11">플레이어</text>
+    <!-- annotation -->
+    <line x1="380" y1="100" x2="470" y2="100" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ai)"/>
+    <text x="480" y="90" fill="var(--ink)" font-size="12">플레이어가 점선 안에 들어오면</text>
+    <text x="480" y="108" fill="var(--ink)" font-size="12">공격 시작. 그 순간 적은 정지하고</text>
+    <text x="480" y="126" fill="var(--ink)" font-size="12">실선 범위 전체에 판정이 나간다.</text>
+  </g>
+  <defs>
+    <marker id="ai" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--ink-2)"/></marker>
+  </defs>
+</svg>
+<p class="cap">그림 4. 트리거 범위(점선)가 히트 범위(실선) 안쪽 중심에 놓여 있다. 적이 오른쪽을 보는 경우.</p>
+</div>
+
+<h2 id="s7">7. 공격 슬롯</h2>
+<p>플레이어의 왼쪽과 오른쪽에 <strong>슬롯이 하나씩</strong> 있고, 같은 종류의 근접 공격을 하는 적끼리는 한쪽에 한 명만 붙어서 공격한다. 슬롯은 공격 종류(리치)별로 따로 둔다.</p>
+<ul>
+<li>짧은 근접 슬롯 — 왼쪽 1, 오른쪽 1</li>
+<li>긴 근접 슬롯 (리치가 긴 변형 적용) — 왼쪽 1, 오른쪽 1 (짧은 근접 슬롯과 별개)</li>
+<li>점프대쉬 — 슬롯을 차지하지 않음</li>
+</ul>
+<h3>슬롯은 "공격권"이지 "고정된 자리"가 아니다</h3>
+<p>적이 왼쪽 슬롯을 잡았다고 해서 끝까지 왼쪽만 쫓는 게 아니다. 슬롯을 잡는다는 것은 <strong>공격할 권리를 얻었다</strong>는 뜻이고, 실제로 어느 옆구리로 갈지는 <strong>그 순간 가까운 쪽</strong>이다. 플레이어가 적을 지나쳐 좌우가 뒤집히면, 공격권은 유지한 채 목표만 새로 가까워진 쪽으로 바뀐다.</p>
+<ul>
+<li>접근 시작 시: 내 무기 종류의 슬롯 중 <strong>가까운 쪽</strong>을 노린다</li>
+<li>접근 도중 좌우가 바뀌면: 공격권은 그대로, 목표 슬롯만 가까운 쪽으로 갱신</li>
+<li>슬롯이 둘 다 찼으면: 공격 후보를 빼고 <strong>대기 / 느린 이동 / 재정렬</strong> 중에서만 고른다. 슬롯이 빌 때까지 이 비공격 행동을 반복한다</li>
+</ul>
+
+<div class="fig">
+<svg viewBox="0 0 860 260" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif" font-size="13">
+  <g transform="translate(430,130)">
+    <!-- spear slots (outer) -->
+    <rect x="-230" y="-40" width="70" height="80" rx="8" fill="var(--player)" opacity=".10" stroke="var(--player)" stroke-dasharray="5 4"/>
+    <rect x="160" y="-40" width="70" height="80" rx="8" fill="var(--player)" opacity=".10" stroke="var(--player)" stroke-dasharray="5 4"/>
+    <text x="-195" y="-52" text-anchor="middle" fill="var(--ink-2)" font-size="12">긴 근접 L</text>
+    <text x="195" y="-52" text-anchor="middle" fill="var(--ink-2)" font-size="12">긴 근접 R</text>
+    <!-- sword slots (inner) -->
+    <rect x="-140" y="-40" width="70" height="80" rx="8" fill="var(--gob)" opacity=".18" stroke="var(--gob)"/>
+    <rect x="70" y="-40" width="70" height="80" rx="8" fill="var(--gob)" opacity=".18" stroke="var(--gob)"/>
+    <text x="-105" y="-52" text-anchor="middle" fill="var(--gob)" font-weight="700" font-size="12">짧은 근접 L</text>
+    <text x="105" y="-52" text-anchor="middle" fill="var(--gob)" font-weight="700" font-size="12">짧은 근접 R</text>
+    <!-- player -->
+    <circle cx="0" cy="0" r="16" fill="var(--player)"/>
+    <text x="0" y="36" text-anchor="middle" fill="var(--player)">플레이어</text>
+    <!-- goblins occupying -->
+    <rect x="-116" y="-11" width="22" height="22" rx="4" fill="var(--gob)"/>
+    <text x="-105" y="64" text-anchor="middle" fill="var(--ink-2)" font-size="12">점유 중</text>
+    <!-- second goblin waiting / repositioning -->
+    <rect x="-116" y="-110" width="22" height="22" rx="4" fill="var(--gob)" opacity=".6"/>
+    <path d="M-95 -95 A110 110 0 0 1 100 -50" stroke="var(--move)" stroke-width="3" fill="none" stroke-dasharray="7 5" marker-end="url(#am3)"/>
+    <text x="-50" y="-118" fill="var(--ink-2)" font-size="12">L이 차 있으면 반원으로 돌아 R로</text>
+  </g>
+  <defs>
+    <marker id="am3" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--move)"/></marker>
+  </defs>
+</svg>
+<p class="cap">그림 5. 플레이어 양옆의 슬롯. 짧은 근접 슬롯(초록)과 긴 근접 슬롯(주황 점선)은 별개 층으로 관리된다.</p>
+</div>
+
+<div class="note">
+<strong>구현 메모</strong> — 슬롯은 적 개체가 아니라 <strong>플레이어(또는 별도 관리자)</strong>가 들고 있어야 여러 적이 공유할 수 있다. 각 적은 "내 무기 종류 슬롯에 빈 곳이 있는가"만 묻고, 있으면 공격권을 하나 받은 뒤 방향은 매 순간 가까운 쪽으로 정한다. 공격권은 공격이 끝나면 반납한다. 적이 하나뿐인 테스트에서는 슬롯이 항상 비어 있으므로 결과에 영향이 없다.
+</div>
+
+<h2 id="s8">8. 행동 선택 규칙</h2>
+<p>행동 선택은 두 단계다. 먼저 <strong>거리로 후보를 거르고</strong>, 남은 후보 중에서 <strong>가중치 랜덤</strong>으로 하나를 뽑는다. 랜덤이 먼저가 아니라 거리 필터가 먼저라는 점이 중요하다. 근접 거리에서 점프대쉬가 절대 나오지 않는 것이 그 증거다.</p>
+
+<pre class="mermaid">
+flowchart TD
+    S([행동 선택 시작]) --> D{플레이어와의 거리}
+    D -- 원거리<br>점프 발동 거리 이상 --> F[후보: 점프대쉬 / 공격 접근 / 자리 재정렬<br>점프대쉬는 슬롯 무관]
+    D -- 근거리 --> N{근접 슬롯에<br>빈 자리 있나?}
+    N -- 예 --> C1[후보: 근접공격 / 자리 재정렬<br>공격 방향 = 가까운 쪽]
+    N -- 아니오 --> C2[후보: 대기 / 느린 이동 / 자리 재정렬<br>슬롯이 빌 때까지 반복]
+    F --> R[가중치 랜덤 선택]
+    C1 --> R
+    C2 --> R
+    R --> X([선택된 행동 실행])
+</pre>
+<p class="cap">그림 6. 행동 선택 흐름. 각 가중치는 파라미터로 열어 두고 플레이하며 맞춘다.</p>
+
+<h3>공격 후 행동 선택 (별도 2택)</h3>
+<p>공격이 끝난 직후에는 위의 3택으로 바로 가지 않고, 먼저 <strong>대기 / 느린 이동</strong> 둘 중 하나를 확률로 고른 뒤, 그것이 끝나야 3택으로 넘어간다. 느린 이동의 방향은 그 순간 플레이어와의 거리로 정한다 — 가까우면 뒤로, 이미 멀면 플레이어 쪽으로.</p>
+
+<h2 id="s9">9. 비헤이비어 트리 골격</h2>
+<p>위 내용을 트리로 옮긴 뼈대. 기존 방침대로 잎(leaf) 노드 하나씩 만들어 따로 테스트하고 마지막에 조립한다.</p>
+
+<pre class="mermaid">
+flowchart TD
+    ROOT[루트: Selector] --> HIT{피격 중?}
+    HIT -- 예 --> STUN[경직 재생]
+    STUN --> ESC[이탈 점프<br>플레이어 반대쪽으로]
+    ESC --> SEL
+    HIT -- 아니오 --> LOOP[전투 루프: Sequence]
+    LOOP --> SEL[행동 선택<br>거리 필터 → 가중치 랜덤]
+    SEL --> BR{선택 결과}
+    BR -- 근접공격 --> AP1[공격 접근<br>빠름 · 지연 실시간 · ㄱ자]
+    AP1 --> ML[근접 공격<br>정지 · 애니]
+    BR -- 점프대쉬 --> AP2[발동 거리까지 접근]
+    AP2 --> JD[점프대쉬<br>공격이 이동 포함]
+    BR -- 자리 재정렬 --> RP[자리 재정렬<br>보통 · 실시간 · 반원]
+    ML --> POST[공격 후 행동: 2택 랜덤]
+    JD --> POST
+    POST --> W[제자리 대기<br>랜덤 시간]
+    POST --> SS[느린 이동<br>느림 · 스냅샷]
+    W --> SEL
+    SS --> SEL
+    RP --> SEL
+</pre>
+<p class="cap">그림 7. 트리 골격. 피격 분기는 매 틱 가장 먼저 검사되어 어떤 잎이 실행 중이든 끊고, 경직 → 이탈 점프를 거쳐 행동 선택으로 돌아온다.</p>
+
+<h3>노드를 만들 때의 원칙</h3>
+<ol>
+<li><strong>이동 노드는 하나만 만든다.</strong> 속도와 목표 추적 방식(실시간 / 지연 실시간 / 스냅샷)을 파라미터로 받아서 공격 접근·재정렬·느린 이동을 모두 표현한다. 점프 계열(점프대쉬, 이탈 점프)은 별도 점프 이동 노드로 묶는다.</li>
+<li><strong>공격 노드는 실행만 한다.</strong> "언제 공격할지"는 접근 노드의 종료 조건과 선택 노드가 정하고, 공격 노드는 정지 + 애니 재생 + 끝나면 성공 반환만 담당한다.</li>
+<li><strong>랜덤은 세 군데뿐이다.</strong> 대기 시간 범위, 공격 후 2택, 행동 3택. 각각 가중치를 인스펙터에서 바꿀 수 있게 열어 둔다. 변형 적은 이 가중치와 속도·리치만 바꿔서 만들 계획이므로 로직 안에 숫자를 박지 않는다.</li>
+<li><strong>피격은 트리 바깥에서 들어온다.</strong> 기존 피격 시스템이 "맞았다"를 알려주면 트리는 현재 잎을 중단하고 루트부터 다시 평가한다. 피격 분기는 항상 경직 → 이탈 점프 순서로 진행되고, 이탈 점프의 착지가 곧 평소 루프의 재시작점이다.</li>
+</ol>
+
+<h2 id="s10">10. 파라미터 목록</h2>
+<p>아래 값은 관찰 느낌에 맞춰 잡은 <strong>임시 시작값</strong>이다. 단위는 플레이어 몸통 폭을 1로 본 상대 단위이며, 실제 수치는 유니티에서 플레이하며 조정한다.</p>
+<div class="tbl"><table>
+<tr><th>구분</th><th>파라미터</th><th>역할</th><th>임시값</th></tr>
+<tr><td rowspan="4">이동</td><td>접근 속도</td><td>공격 접근 이동 속도 (가장 빠름)</td><td>6.0 /초</td></tr>
+<tr><td>재정렬 속도</td><td>자리 재정렬 이동 속도 (보통)</td><td>4.0 /초</td></tr>
+<tr><td>느린 이동 속도</td><td>공격 후 느린 이동 속도 (가장 느림)</td><td>2.0 /초</td></tr>
+<tr><td>추적 지연량</td><td>공격 접근 시 플레이어를 얼마나 늦게 따라갈지</td><td>0.15초 (목표 갱신 주기)</td></tr>
+<tr><td rowspan="2">경로</td><td>z 우선 임계값</td><td>z 차이가 이 값 이상이면 z부터 맞춤</td><td>0.3</td></tr>
+<tr><td>재정렬 유지 거리</td><td>반원을 돌 때 플레이어와 유지할 반지름</td><td>3.0</td></tr>
+<tr><td rowspan="3">공격</td><td>트리거 범위 크기</td><td>공격 시작 조건이 되는 영역 (히트 범위와 별개)</td><td>가로 0.6 × 깊이 0.4</td></tr>
+<tr><td>점프대쉬 발동 거리</td><td>이 거리 이상 떨어져야 점프대쉬 후보에 포함</td><td>4.0 이상</td></tr>
+<tr><td>슬롯 종류</td><td>이 적이 차지하는 슬롯</td><td>짧은 근접</td></tr>
+<tr><td rowspan="2">피격</td><td>이탈 점프 거리</td><td>피격 후 플레이어 반대쪽으로 얼마나 멀리 점프할지</td><td>3.5</td></tr>
+<tr><td>이탈 점프 속도</td><td>이탈 점프의 체공 시간</td><td>체공 0.4초</td></tr>
+<tr><td rowspan="4">랜덤</td><td>대기 시간 최소·최대</td><td>공격 후 대기의 랜덤 범위</td><td>0.2 ~ 1.5초</td></tr>
+<tr><td>공격 후 2택 가중치</td><td>대기 vs 느린 이동</td><td>대기 50 : 느린 이동 50</td></tr>
+<tr><td>행동 3택 가중치</td><td>근접 / 점프대쉬 / 재정렬</td><td>근접 50 : 점프대쉬 25 : 재정렬 25 (원거리) / 근접 65 : 재정렬 35 (근거리)</td></tr>
+<tr><td>느린 이동 거리</td><td>느린 이동의 종료 조건 (거리 기준)</td><td>1.5</td></tr>
+</table></div>
+
+<h2 id="s11">11. 확정된 규칙</h2>
+
+<div class="tbl"><table>
+<tr><th>항목</th><th>결정</th></tr>
+<tr><td>점프대쉬 목표</td><td>점프 시작 순간 스냅샷. 공중 보정 없음</td></tr>
+<tr><td>슬롯이 찼을 때</td><td>공격 후보 제외, 대기 / 느린 이동 / 재정렬 중 랜덤. 슬롯이 빌 때까지 반복</td></tr>
+<tr><td>슬롯과 방향</td><td>슬롯은 공격권. 방향은 그 순간 가까운 쪽으로 계속 갱신</td></tr>
+<tr><td>느린 이동 종료</td><td>거리 기준</td></tr>
+<tr><td>이탈 점프 후 복귀</td><td>완전 랜덤, 직전 행동과 무관</td></tr>
+<tr><td>초기 상태·추격 포기</td><td>없음. 스폰 즉시 전투 루프</td></tr>
+<tr><td>이탈 점프가 벽에 막힘</td><td>다른 방향 중 멀리 갈 수 있는 쪽으로 점프</td></tr>
+<tr><td>수치</td><td>문서의 임시값으로 시작하고 플레이하며 조정</td></tr>
+</table></div>
+
+<h2 id="s12">12. 클로드 코드용 프롬프트</h2>
+<p>아래를 프로젝트 루트에서 클로드 코드에 그대로 붙여 넣는다. 문서 파일 경로는 실제 저장 위치로 바꿔서 쓴다.</p>
+
+<div class="prompt">이 유니티 프로젝트에 "일반 근접 적"의 행동 AI를 추가하려고 해.
+
+먼저 프로젝트를 둘러보고 다음을 파악해서 나한테 요약해 줘:
+- 플레이어와 적의 공격·피격이 어떻게 구현되어 있는지 (판정, 애니메이션 이벤트, 피격 시 호출되는 경로)
+- 적 이동을 담당하는 컴포넌트가 있는지, 있다면 x축과 z축(깊이)을 어떻게 다루는지
+- 이미 비헤이비어 트리나 상태 머신 관련 코드가 있는지
+
+파악이 끝나면, 설계서 파일 [경로/melee-enemy-ai-spec.html]을 읽고 그 내용대로 구현해 줘. 설계서의 핵심만 요약하면:
+
+1. 이 AI는 "어떤 행동을 할지 고르는" 의사결정 계층만 담당해. 공격 판정과 피격 처리는 기존 코드를 그대로 호출해.
+2. 비헤이비어 트리 구조로 만들고, 잎 노드는 다음 8개야: 공격 접근, 근접 공격, 점프대쉬 공격, 공격 후 대기, 공격 후 느린 이동, 자리 재정렬, 피격 경직, 이탈 점프.
+3. 이동 노드는 하나로 만들고 속도와 목표 추적 방식(실시간 / 지연 실시간 / 스냅샷)을 파라미터로 받아. 공격 접근은 빠름+지연 실시간+ㄱ자 경로(z 먼저 맞추고 꺾음), 자리 재정렬은 보통+실시간+반원, 느린 이동은 느림+스냅샷+직선이야. 점프 계열(점프대쉬, 이탈 점프)은 별도 점프 이동 노드로 묶어.
+4. 행동 선택은 거리로 후보를 먼저 거른 뒤 가중치 랜덤으로 뽑아. 점프대쉬는 일정 거리 이상일 때만 후보에 들어가고, 시작 순간 플레이어 위치를 스냅샷으로 잡아 공중 보정 없이 날아가.
+5. 공격 직후에는 대기 / 느린 이동 2택을 먼저 하고, 끝나면 다시 행동 선택으로 돌아가. 느린 이동은 시작 시 좌표를 한 번 찍고 정해진 거리만큼만 가.
+6. 플레이어 좌우에 무기 종류(리치)별 공격 슬롯이 있어. 이 적은 "짧은 근접" 슬롯을 써. 슬롯은 "공격권"이야: 빈 슬롯이 있으면 공격권을 받고, 실제로 붙는 방향은 매 순간 가까운 쪽으로 갱신해(플레이어가 지나쳐서 좌우가 바뀌면 목표 방향도 바뀜). 슬롯이 다 차 있으면 공격 후보를 빼고 대기 / 느린 이동 / 재정렬만 골라서, 슬롯이 빌 때까지 반복해. 점프대쉬는 슬롯을 안 써.
+7. 피격되면 어떤 행동 중이든 즉시 끊고, 경직이 끝나면 플레이어 반대 방향으로 빠르게 점프해서 거리를 벌려(이탈 점프). 그 방향이 벽에 막혀 있으면 다른 방향 중 멀리 갈 수 있는 쪽으로 점프해. 착지하면 루트부터 완전 랜덤으로 다시 골라.
+8. 순찰·대기 같은 초기 상태와 추격 포기 거리는 없어. 스폰 즉시 전투 루프에 들어가.
+
+작업 방식:
+- 잎 노드를 하나씩 만들고, 각 노드를 단독으로 테스트할 수 있는 최소한의 진입점을 같이 만들어 줘. 전부 만든 뒤 마지막에 트리로 조립해.
+- 모든 수치(속도, 거리, 대기 시간 범위, 가중치, 리치)는 인스펙터에서 바꿀 수 있게 ScriptableObject나 직렬화 필드로 빼. 초기값은 설계서 10장의 임시값을 넣어 줘. 나중에 변형 적은 이 수치만 바꿔서 만들 거야.
+- 기존 코드의 이름 규칙과 폴더 구조를 따라 줘.
+- 노드 하나를 만들 때마다 무엇을 만들었고 어떻게 단독 테스트하는지 짧게 알려 주고, 내 확인을 받은 뒤 다음으로 넘어가.</div>
+
+<p class="cap">프롬프트 첫 단계에서 프로젝트 요약을 받아 보고, 기존 구조와 어긋나는 부분이 있으면 그때 설계서 쪽을 고치는 편이 빠르다.</p>
+
+</div>
+</body>
+</html>

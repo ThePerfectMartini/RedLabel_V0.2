@@ -22,6 +22,6 @@ MonoBehaviour:
   groundSlideDeceleration: 30
   attackCooldown: 0.1
   attackClip: {fileID: 7400000, guid: c6cd15feb675ef14a8ad7af56966d573, type: 2}
-  durationOverride: 0
+  durationOverride: 1
   nextAttack: {fileID: 0}
   canCancelOtherAttacks: 0
